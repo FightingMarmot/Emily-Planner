@@ -230,6 +230,29 @@
     }
     .task-row:hover .push-btn { opacity: 1; }
     .push-btn:hover { color: #8c7b6b; border-color: #c5bdb3; }
+
+    @keyframes catwalk {
+      0%   { left: -120px; }
+      100% { left: 110vw; }
+    }
+    @keyframes catleg {
+      0%, 100% { transform: rotate(15deg); }
+      50%       { transform: rotate(-15deg); }
+    }
+    @keyframes cattail {
+      0%, 100% { transform: rotate(20deg); }
+      50%       { transform: rotate(-10deg); }
+    }
+    .ginger-cat {
+      position: fixed;
+      bottom: 0px;
+      left: -120px;
+      width: 100px;
+      height: 70px;
+      animation: catwalk 4s linear forwards;
+      pointer-events: none;
+      z-index: 9998;
+    }
   </style>
 </head>
 <body>
@@ -649,6 +672,70 @@
       }
     }
   });
+</script>
+<script>
+  function spawnCat() {
+    const cat = document.createElementNS('http://www.w3.org/2000/svg','svg');
+    cat.setAttribute('viewBox','0 0 100 70');
+    cat.setAttribute('xmlns','http://www.w3.org/2000/svg');
+    cat.classList.add('ginger-cat');
+    cat.innerHTML = `
+      <!-- tail -->
+      <g style="transform-origin:18px 38px; animation: cattail 0.4s ease-in-out infinite;">
+        <path d="M18 38 Q0 30 5 15 Q8 8 14 12 Q10 22 18 30" fill="#c8651a" />
+      </g>
+      <!-- body -->
+      <ellipse cx="52" cy="42" rx="28" ry="18" fill="#e07820" />
+      <!-- belly -->
+      <ellipse cx="54" cy="46" rx="16" ry="11" fill="#f5c07a" />
+      <!-- head -->
+      <ellipse cx="76" cy="28" rx="16" ry="14" fill="#e07820" />
+      <!-- ears -->
+      <polygon points="64,18 68,6 74,17" fill="#e07820" />
+      <polygon points="66,17 69,9 73,17" fill="#d4826e" />
+      <polygon points="82,16 87,5 90,17" fill="#e07820" />
+      <polygon points="83,16 87,8 89,17" fill="#d4826e" />
+      <!-- face -->
+      <ellipse cx="72" cy="30" rx="3" ry="3.5" fill="#1a1a1a" />
+      <ellipse cx="73" cy="29" rx="1" ry="1" fill="white" />
+      <ellipse cx="82" cy="30" rx="3" ry="3.5" fill="#1a1a1a" />
+      <ellipse cx="83" cy="29" rx="1" ry="1" fill="white" />
+      <!-- nose -->
+      <polygon points="77,33 79,33 78,35" fill="#d4826e" />
+      <!-- mouth -->
+      <path d="M76 35 Q77 37 78 35 Q79 37 80 35" stroke="#1a1a1a" stroke-width="0.8" fill="none"/>
+      <!-- whiskers -->
+      <line x1="62" y1="32" x2="74" y2="33" stroke="#f5e6c8" stroke-width="0.8"/>
+      <line x1="62" y1="35" x2="74" y2="34" stroke="#f5e6c8" stroke-width="0.8"/>
+      <line x1="82" y1="33" x2="94" y2="31" stroke="#f5e6c8" stroke-width="0.8"/>
+      <line x1="82" y1="34" x2="94" y2="36" stroke="#f5e6c8" stroke-width="0.8"/>
+      <!-- stripes -->
+      <path d="M42 30 Q44 28 46 30" stroke="#c8651a" stroke-width="1.5" fill="none"/>
+      <path d="M50 27 Q52 25 54 27" stroke="#c8651a" stroke-width="1.5" fill="none"/>
+      <path d="M58 28 Q60 26 62 28" stroke="#c8651a" stroke-width="1.5" fill="none"/>
+      <!-- front legs -->
+      <g style="transform-origin:66px 58px; animation: catleg 0.4s ease-in-out infinite;">
+        <rect x="63" y="56" width="7" height="16" rx="3" fill="#e07820"/>
+        <ellipse cx="66" cy="72" rx="5" ry="3" fill="#c8651a"/>
+      </g>
+      <g style="transform-origin:74px 58px; animation: catleg 0.4s ease-in-out infinite 0.2s;">
+        <rect x="71" y="56" width="7" height="16" rx="3" fill="#e07820"/>
+        <ellipse cx="74" cy="72" rx="5" ry="3" fill="#c8651a"/>
+      </g>
+      <!-- back legs -->
+      <g style="transform-origin:36px 58px; animation: catleg 0.4s ease-in-out infinite 0.2s;">
+        <rect x="33" y="56" width="7" height="14" rx="3" fill="#e07820"/>
+        <ellipse cx="36" cy="70" rx="5" ry="3" fill="#c8651a"/>
+      </g>
+      <g style="transform-origin:44px 58px; animation: catleg 0.4s ease-in-out infinite;">
+        <rect x="41" y="56" width="7" height="14" rx="3" fill="#e07820"/>
+        <ellipse cx="44" cy="70" rx="5" ry="3" fill="#c8651a"/>
+      </g>
+    `;
+    document.body.appendChild(cat);
+    setTimeout(() => cat.remove(), 4200);
+  }
+  window.addEventListener('load', () => setTimeout(spawnCat, 600));
 </script>
 </body>
 </html>
