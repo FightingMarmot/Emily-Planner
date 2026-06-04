@@ -188,16 +188,24 @@
 
     .down-arrow {
       margin-left: auto;
-      font-size: 12px;
-      color: #c5bdb3;
-      cursor: pointer;
+      width: 15px;
+      height: 15px;
+      border: 1px solid #c4a0a0;
+      border-radius: 50%;
       flex-shrink: 0;
-      padding: 0 4px;
-      transition: color 0.2s, transform 0.2s;
+      align-self: flex-start;
+      margin-top: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
       user-select: none;
-      align-self: center;
+      font-size: 9px;
+      color: #c4a0a0;
+      line-height: 1;
     }
-    .down-arrow:hover { color: #8c7b6b; transform: translateY(2px); }
+    .down-arrow:hover { background: #c4a0a0; color: #f5f2ed; border-color: #c4a0a0; }
 
 
     @keyframes shoot {
