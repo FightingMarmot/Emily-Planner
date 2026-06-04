@@ -213,6 +213,23 @@
       width: 140px;
       background: linear-gradient(to left, rgba(245,230,200,0.7), transparent);
     }
+
+    .push-btn {
+      margin-left: auto;
+      font-family: 'DM Mono', monospace;
+      font-size: 9px;
+      color: #b0a898;
+      background: none;
+      border: 1px solid #ddd8d0;
+      border-radius: 20px;
+      padding: 2px 8px;
+      cursor: pointer;
+      flex-shrink: 0;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .task-row:hover .push-btn { opacity: 1; }
+    .push-btn:hover { color: #8c7b6b; border-color: #c5bdb3; }
   </style>
 </head>
 <body>
@@ -232,31 +249,41 @@
   <div class="section-label">Thursday 5 June — Today</div>
 
   <div class="task-row" onclick="tick(this)">
-    <div class="tick"></div><div class="dot dot-urgent"></div>
+    <div class="tick">
+    <button class="push-btn" onclick="pushTask(event, this)" title="Push to next day">→</button>
+  </div><div class="dot dot-urgent"></div>
     <span class="task-time urgent">Now</span>
     <div class="task-body"><div class="task-text">Chase Zoom link — S6 ideas meeting</div></div>
   </div>
 
   <div class="task-row" onclick="tick(this)">
-    <div class="tick"></div><div class="dot dot-urgent"></div>
+    <div class="tick">
+    <button class="push-btn" onclick="pushTask(event, this)" title="Push to next day">→</button>
+  </div><div class="dot dot-urgent"></div>
     <span class="task-time urgent">By 6pm</span>
     <div class="task-body"><div class="task-text">Email Nuffield Foundation — new commissioned podcast</div></div>
   </div>
 
   <div class="task-row" onclick="tick(this)">
-    <div class="tick"></div><div class="dot dot-urgent"></div>
+    <div class="tick">
+    <button class="push-btn" onclick="pushTask(event, this)" title="Push to next day">→</button>
+  </div><div class="dot dot-urgent"></div>
     <span class="task-time urgent">Today</span>
     <div class="task-body"><div class="task-text">Email Zeynep — script length</div></div>
   </div>
 
   <div class="task-row" onclick="tick(this)">
-    <div class="tick"></div><div class="dot dot-prep"></div>
+    <div class="tick">
+    <button class="push-btn" onclick="pushTask(event, this)" title="Push to next day">→</button>
+  </div><div class="dot dot-prep"></div>
     <span class="task-time">Before 6pm</span>
     <div class="task-body"><div class="task-text">Prep S6 ideas + Barrie &amp; Brotton interview questions</div></div>
   </div>
 
   <div class="task-row" onclick="tick(this)">
-    <div class="tick"></div><div class="dot dot-prep"></div>
+    <div class="tick">
+    <button class="push-btn" onclick="pushTask(event, this)" title="Push to next day">→</button>
+  </div><div class="dot dot-prep"></div>
     <span class="task-time">Later today</span>
     <div class="task-body"><div class="task-text">Look at Emily Gilbert's briefs</div></div>
   </div>
@@ -264,7 +291,9 @@
   <div class="section-label">Friday 6 June</div>
 
   <div class="task-row" onclick="tick(this)">
-    <div class="tick"></div><div class="dot dot-fixed"></div>
+    <div class="tick">
+    <button class="push-btn" onclick="pushTask(event, this)" title="Push to next day">→</button>
+  </div><div class="dot dot-fixed"></div>
     <span class="task-time blue">2:00 pm</span>
     <div class="task-body">
       <div class="task-text">Ideas meeting — What's Your Map? S6 launch</div>
@@ -273,7 +302,9 @@
   </div>
 
   <div class="task-row" onclick="tick(this)">
-    <div class="tick"></div><div class="dot dot-wym"></div>
+    <div class="tick">
+    <button class="push-btn" onclick="pushTask(event, this)" title="Push to next day">→</button>
+  </div><div class="dot dot-wym"></div>
     <span class="task-time wym">3:00 pm</span>
     <div class="task-body">
       <div class="task-text">Studio — David Barrie &amp; Jerry Brotton</div>
@@ -284,7 +315,9 @@
   <div class="section-label">Monday 9 June</div>
 
   <div class="task-row" onclick="tick(this)">
-    <div class="tick"></div><div class="dot dot-wym"></div>
+    <div class="tick">
+    <button class="push-btn" onclick="pushTask(event, this)" title="Push to next day">→</button>
+  </div><div class="dot dot-wym"></div>
     <span class="task-time wym">Morning</span>
     <div class="task-body">
       <div class="task-text">Assembly edit — David Barrie episode</div>
@@ -293,7 +326,9 @@
   </div>
 
   <div class="task-row" onclick="tick(this)">
-    <div class="tick"></div><div class="dot dot-prep"></div>
+    <div class="tick">
+    <button class="push-btn" onclick="pushTask(event, this)" title="Push to next day">→</button>
+  </div><div class="dot dot-prep"></div>
     <span class="task-time">Afternoon</span>
     <div class="task-body"><div class="task-text">BBC meeting prep — Dodd &amp; Shakespeare</div></div>
   </div>
@@ -301,7 +336,9 @@
   <div class="section-label">Tuesday 10 June</div>
 
   <div class="task-row" onclick="tick(this)">
-    <div class="tick"></div><div class="dot dot-wym"></div>
+    <div class="tick">
+    <button class="push-btn" onclick="pushTask(event, this)" title="Push to next day">→</button>
+  </div><div class="dot dot-wym"></div>
     <span class="task-time wym">Morning</span>
     <div class="task-body">
       <div class="task-text">Fine cut — David Barrie episode</div>
@@ -310,7 +347,9 @@
   </div>
 
   <div class="task-row" onclick="tick(this)">
-    <div class="tick"></div><div class="dot dot-prep"></div>
+    <div class="tick">
+    <button class="push-btn" onclick="pushTask(event, this)" title="Push to next day">→</button>
+  </div><div class="dot dot-prep"></div>
     <span class="task-time">Afternoon</span>
     <div class="task-body"><div class="task-text">Final BBC prep + test Teams link</div></div>
   </div>
@@ -318,7 +357,9 @@
   <div class="section-label">Wednesday 11 June</div>
 
   <div class="task-row" onclick="tick(this)">
-    <div class="tick"></div><div class="dot dot-fixed"></div>
+    <div class="tick">
+    <button class="push-btn" onclick="pushTask(event, this)" title="Push to next day">→</button>
+  </div><div class="dot dot-fixed"></div>
     <span class="task-time blue">4:00 pm</span>
     <div class="task-body">
       <div class="task-text">BBC meeting — Tom Shakespeare &amp; Matthew Dodd</div>
@@ -329,7 +370,9 @@
   <div class="section-label">Thursday–Friday 12–13 June</div>
 
   <div class="task-row" onclick="tick(this)">
-    <div class="tick"></div><div class="dot dot-wym"></div>
+    <div class="tick">
+    <button class="push-btn" onclick="pushTask(event, this)" title="Push to next day">→</button>
+  </div><div class="dot dot-wym"></div>
     <span class="task-time wym">12 June</span>
     <div class="task-body">
       <div class="task-text">Assembly edit — Cressida Cowell episode</div>
@@ -338,7 +381,9 @@
   </div>
 
   <div class="task-row" onclick="tick(this)">
-    <div class="tick"></div><div class="dot dot-wym"></div>
+    <div class="tick">
+    <button class="push-btn" onclick="pushTask(event, this)" title="Push to next day">→</button>
+  </div><div class="dot dot-wym"></div>
     <span class="task-time wym">13 June</span>
     <div class="task-body">
       <div class="task-text">Fine cut — Cressida Cowell episode</div>
@@ -349,7 +394,9 @@
   <div class="section-label">Tuesday 16 June — We Society</div>
 
   <div class="task-row" onclick="tick(this)">
-    <div class="tick"></div><div class="dot dot-we"></div>
+    <div class="tick">
+    <button class="push-btn" onclick="pushTask(event, this)" title="Push to next day">→</button>
+  </div><div class="dot dot-we"></div>
     <span class="task-time purple">10:00 am</span>
     <div class="task-body">
       <div class="task-text">Interview — Alice Reeves</div>
@@ -358,7 +405,9 @@
   </div>
 
   <div class="task-row" onclick="tick(this)">
-    <div class="tick"></div><div class="dot dot-we"></div>
+    <div class="tick">
+    <button class="push-btn" onclick="pushTask(event, this)" title="Push to next day">→</button>
+  </div><div class="dot dot-we"></div>
     <span class="task-time purple">11:00 am</span>
     <div class="task-body">
       <div class="task-text">Interview — Prof. Adam Smith</div>
@@ -388,6 +437,58 @@
 <script>
   const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
   const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+  // Section order for push-to-next-day
+  const SECTION_ORDER = [
+    'Thursday 5 June',
+    'Friday 6 June',
+    'Monday 9 June',
+    'Tuesday 10 June',
+    'Wednesday 11 June',
+    'Thursday–Friday 12–13 June',
+    'Tuesday 16 June'
+  ];
+
+  function pushTask(e, btn) {
+    e.stopPropagation();
+    const row = btn.closest('.task-row');
+    // Find current section label
+    let section = row.previousElementSibling;
+    while (section && !section.classList.contains('section-label')) {
+      section = section.previousElementSibling;
+    }
+    if (!section) return;
+
+    const currentText = section.textContent.trim();
+    const currentIdx = SECTION_ORDER.findIndex(s => currentText.includes(s));
+    if (currentIdx === -1 || currentIdx >= SECTION_ORDER.length - 1) return;
+
+    // Find next section label
+    const nextSectionText = SECTION_ORDER[currentIdx + 1];
+    const allSections = document.querySelectorAll('.section-label');
+    let nextSection = null;
+    allSections.forEach(s => {
+      if (s.textContent.includes(nextSectionText)) nextSection = s;
+    });
+    if (!nextSection) return;
+
+    // Clone row and insert after next section label
+    const clone = row.cloneNode(true);
+    clone.querySelector('.push-btn').addEventListener('click', (e) => pushTask(e, clone.querySelector('.push-btn')));
+    // Re-assign a new ID so tick state is independent
+    const newId = 'task-pushed-' + Date.now();
+    clone.dataset.id = newId;
+    clone.querySelector('.tick').classList.remove('done');
+    clone.querySelector('.task-text').classList.remove('done-text');
+
+    // Insert after next section
+    nextSection.insertAdjacentElement('afterend', clone);
+
+    // Animate out original
+    row.style.transition = 'opacity 0.3s';
+    row.style.opacity = '0';
+    setTimeout(() => row.remove(), 300);
+  }
 
   function updateClock() {
     const now = new Date();
