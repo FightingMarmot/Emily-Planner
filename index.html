@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #eeeae3;
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 40px 20px;
+      font-family: 'DM Mono', monospace;
+    }
+
+    .planner {
+      background: #f5f2ed;
+      border-radius: 14px;
+      padding: 32px 32px 36px;
+      color: #3a3530;
+      width: 100%;
+      max-width: 560px;
+      box-shadow: 0 4px 32px rgba(0,0,0,0.08);
+    }
+
+    .top {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      margin-bottom: 24px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid #ddd8d0;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .title-block .label {
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      color: #a09888;
+      margin-bottom: 4px;
+    }
+
+    .title-block .name {
+      font-family: 'DM Serif Display', serif;
+      font-size: 28px;
+      color: #3a3530;
+      line-height: 1;
+    }
+
+    .title-block .name em {
+      font-style: italic;
+      color: #8c7b6b;
+    }
+
+    .clock-block { text-align: right; }
+
+    .clock-display {
+      font-family: 'DM Mono', monospace;
+      font-size: 32px;
+      font-weight: 300;
+      color: #3a3530;
+      letter-spacing: 0.04em;
+      line-height: 1;
+    }
+
+    .clock-date {
+      font-size: 10px;
+      color: #a09888;
+      letter-spacing: 0.1em;
+      margin-top: 4px;
+    }
+
+    .section-label {
+      font-size: 9px;
+      letter-spacing: 0.16em;
+      color: #b0a898;
+      margin: 18px 0 8px;
+      text-transform: uppercase;
+    }
+
+    .task-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 9px 0;
+      border-bottom: 1px solid #ede8e0;
+      cursor: pointer;
+    }
+
+    .task-row:last-child { border-bottom: none; }
+    .task-row:hover .task-text { color: #6b5c4e; }
+
+    .tick {
+      width: 15px;
+      height: 15px;
+      border: 1px solid #c5bdb3;
+      border-radius: 50%;
+      flex-shrink: 0;
+      margin-top: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .tick.done { background: #8c7b6b; border-color: #8c7b6b; }
+    .tick.done::after {
+      content: '';
+      width: 7px;
+      height: 4px;
+      border-left: 1.5px solid #f5f2ed;
+      border-bottom: 1.5px solid #f5f2ed;
+      transform: rotate(-45deg) translateY(-1px);
+      display: block;
+    }
+
+    .task-time {
+      font-size: 10px;
+      color: #b0a898;
+      min-width: 60px;
+      padding-top: 2px;
+      letter-spacing: 0.04em;
+    }
+
+    .task-time.urgent { color: #b07050; }
+    .task-time.purple { color: #7b6ea8; }
+    .task-time.blue   { color: #5e88a8; }
+    .task-time.wym    { color: #5a8a6a; }
+
+    .task-body { flex: 1; }
+
+    .task-text {
+      font-size: 12px;
+      color: #3a3530;
+      line-height: 1.5;
+      transition: color 0.15s;
+    }
+
+    .task-text.done-text {
+      text-decoration: line-through;
+      color: #c5bdb3;
+    }
+
+    .task-sub {
+      font-size: 10px;
+      color: #b0a898;
+      margin-top: 2px;
+      line-height: 1.4;
+    }
+
+    .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      margin-top: 5px;
+    }
+
+    .dot-urgent { background: #c89070; }
+    .dot-prep   { background: #8c7b6b; }
+    .dot-fixed  { background: #5e88a8; }
+    .dot-we     { background: #7b6ea8; }
+    .dot-wym    { background: #5a8a6a; }
+
+    .footer {
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid #ddd8d0;
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 9px;
+      color: #b0a898;
+      letter-spacing: 0.08em;
+    }
+
+    .legend-dot { width: 6px; height: 6px; border-radius: 50%; }
+  </style>
+</head>
+<body>
+<div class="planner">
+
+  <div class="top">
+    <div class="title-block">
+      <div class="label">WEEK PLANNER</div>
+      <div class="name">Emi's <em>June</em></div>
+    </div>
+    <div class="clock-block">
+      <div class="clock-display" id="clock">--:--:--</div>
+      <div class="clock-date" id="dateline">---</div>
+    </div>
+  </div>
+
+  <div class="section-label">Thursday 5 June — Today</div>
+
+  <div class="task-row" onclick="tick(this)">
+    <div class="tick"></div><div class="dot dot-urgent"></div>
+    <span class="task-time urgent">Now</span>
+    <div class="task-body"><div class="task-text">Chase Zoom link — S6 ideas meeting</div></div>
+  </div>
+
+  <div class="task-row" onclick="tick(this)">
+    <div class="tick"></div><div class="dot dot-urgent"></div>
+    <span class="task-time urgent">By 6pm</span>
+    <div class="task-body"><div class="task-text">Email Nuffield Foundation — new commissioned podcast</div></div>
+  </div>
+
+  <div class="task-row" onclick="tick(this)">
+    <div class="tick"></div><div class="dot dot-prep"></div>
+    <span class="task-time">Before 6pm</span>
+    <div class="task-body"><div class="task-text">Prep S6 ideas + Barrie &amp; Brotton interview questions</div></div>
+  </div>
+
+  <div class="section-label">Friday 6 June</div>
+
+  <div class="task-row" onclick="tick(this)">
+    <div class="tick"></div><div class="dot dot-fixed"></div>
+    <span class="task-time blue">2:00 pm</span>
+    <div class="task-body">
+      <div class="task-text">Ideas meeting — What's Your Map? S6 launch</div>
+      <div class="task-sub">Zoom</div>
+    </div>
+  </div>
+
+  <div class="task-row" onclick="tick(this)">
+    <div class="tick"></div><div class="dot dot-wym"></div>
+    <span class="task-time wym">3:00 pm</span>
+    <div class="task-body">
+      <div class="task-text">Studio — David Barrie &amp; Jerry Brotton</div>
+      <div class="task-sub">WYM · Producing + recording episode</div>
+    </div>
+  </div>
+
+  <div class="section-label">Monday 9 June</div>
+
+  <div class="task-row" onclick="tick(this)">
+    <div class="tick"></div><div class="dot dot-wym"></div>
+    <span class="task-time wym">Morning</span>
+    <div class="task-body">
+      <div class="task-text">Assembly edit — David Barrie episode</div>
+      <div class="task-sub">WYM</div>
+    </div>
+  </div>
+
+  <div class="task-row" onclick="tick(this)">
+    <div class="tick"></div><div class="dot dot-prep"></div>
+    <span class="task-time">Afternoon</span>
+    <div class="task-body"><div class="task-text">BBC meeting prep — Dodd &amp; Shakespeare</div></div>
+  </div>
+
+  <div class="section-label">Tuesday 10 June</div>
+
+  <div class="task-row" onclick="tick(this)">
+    <div class="tick"></div><div class="dot dot-wym"></div>
+    <span class="task-time wym">Morning</span>
+    <div class="task-body">
+      <div class="task-text">Fine cut — David Barrie episode</div>
+      <div class="task-sub">WYM</div>
+    </div>
+  </div>
+
+  <div class="task-row" onclick="tick(this)">
+    <div class="tick"></div><div class="dot dot-prep"></div>
+    <span class="task-time">Afternoon</span>
+    <div class="task-body"><div class="task-text">Final BBC prep + test Teams link</div></div>
+  </div>
+
+  <div class="section-label">Wednesday 11 June</div>
+
+  <div class="task-row" onclick="tick(this)">
+    <div class="tick"></div><div class="dot dot-fixed"></div>
+    <span class="task-time blue">4:00 pm</span>
+    <div class="task-body">
+      <div class="task-text">BBC meeting — Tom Shakespeare &amp; Matthew Dodd</div>
+      <div class="task-sub">Teams · ID: 391 997 769 907 896 · PW: YM2vi7jS</div>
+    </div>
+  </div>
+
+  <div class="section-label">Thursday–Friday 12–13 June</div>
+
+  <div class="task-row" onclick="tick(this)">
+    <div class="tick"></div><div class="dot dot-wym"></div>
+    <span class="task-time wym">12 June</span>
+    <div class="task-body">
+      <div class="task-text">Assembly edit — Cressida Cowell episode</div>
+      <div class="task-sub">WYM · Out 1 July</div>
+    </div>
+  </div>
+
+  <div class="task-row" onclick="tick(this)">
+    <div class="tick"></div><div class="dot dot-wym"></div>
+    <span class="task-time wym">13 June</span>
+    <div class="task-body">
+      <div class="task-text">Fine cut — Cressida Cowell episode</div>
+      <div class="task-sub">WYM</div>
+    </div>
+  </div>
+
+  <div class="section-label">Tuesday 16 June — We Society</div>
+
+  <div class="task-row" onclick="tick(this)">
+    <div class="tick"></div><div class="dot dot-we"></div>
+    <span class="task-time purple">10:00 am</span>
+    <div class="task-body">
+      <div class="task-text">Interview — Alice Reeves</div>
+      <div class="task-sub">We Society · Research Grants &amp; Programmes Manager (Education), Nuffield Foundation</div>
+    </div>
+  </div>
+
+  <div class="task-row" onclick="tick(this)">
+    <div class="tick"></div><div class="dot dot-we"></div>
+    <span class="task-time purple">11:00 am</span>
+    <div class="task-body">
+      <div class="task-text">Interview — Prof. Adam Smith</div>
+      <div class="task-sub">We Society · Edward Orsborn Prof. of US Politics &amp; Political History, Oxford</div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <div class="legend-item"><div class="legend-dot" style="background:#c89070"></div>urgent</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#5e88a8"></div>fixed</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#8c7b6b"></div>prep</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#5a8a6a"></div>what's your map</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#7b6ea8"></div>we society</div>
+  </div>
+
+</div>
+
+<script>
+  const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+  function updateClock() {
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2,'0');
+    const m = String(now.getMinutes()).padStart(2,'0');
+    const s = String(now.getSeconds()).padStart(2,'0');
+    document.getElementById('clock').textContent = h + ':' + m + ':' + s;
+    document.getElementById('dateline').textContent = DAYS[now.getDay()] + ' ' + now.getDate() + ' ' + MONTHS[now.getMonth()];
+  }
+
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  function tick(row) {
+    const t = row.querySelector('.tick');
+    const txt = row.querySelector('.task-text');
+    t.classList.toggle('done');
+    txt.classList.toggle('done-text');
+  }
+</script>
+</body>
+</html>
