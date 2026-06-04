@@ -217,19 +217,25 @@
     .push-btn {
       margin-left: auto;
       font-family: 'DM Mono', monospace;
-      font-size: 9px;
-      color: #b0a898;
+      font-size: 14px;
+      color: #7a9e7e;
       background: none;
-      border: 1px solid #ddd8d0;
-      border-radius: 20px;
-      padding: 2px 8px;
+      border: 1.5px solid #7a9e7e;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       cursor: pointer;
       flex-shrink: 0;
       opacity: 0;
-      transition: opacity 0.2s;
+      transition: opacity 0.2s, background 0.2s, color 0.2s;
+      line-height: 1;
+      padding: 0;
     }
     .task-row:hover .push-btn { opacity: 1; }
-    .push-btn:hover { color: #8c7b6b; border-color: #c5bdb3; }
+    .push-btn:hover { background: #7a9e7e; color: #fff; }
 
     @keyframes catwalk {
       0%   { left: -150px; }
