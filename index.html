@@ -352,12 +352,69 @@
   updateClock();
   setInterval(updateClock, 1000);
 
+  // Restore saved tick states
+  function getSavedTicks() {
+    try { return JSON.parse(localStorage.getItem('emi-planner-ticks') || '{}'); } catch { return {}; }
+  }
+
+  function saveTicks(ticks) {
+    localStorage.setItem('emi-planner-ticks', JSON.stringify(ticks));
+  }
+
   function tick(row) {
     const t = row.querySelector('.tick');
     const txt = row.querySelector('.task-text');
     t.classList.toggle('done');
     txt.classList.toggle('done-text');
+
+    // Save state
+    const ticks = getSavedTicks();
+    const id = row.dataset.id;
+    ticks[id] = t.classList.contains('done');
+    saveTicks(ticks);
   }
+
+  // Assign IDs and restore tick states on load
+  document.querySelectorAll('.task-row').forEach((row, i) => {
+    row.dataset.id = 'task-' + i;
+  });
+
+  const saved = getSavedTicks();
+  document.querySelectorAll('.task-row').forEach(row => {
+    if (saved[row.dataset.id]) {
+      row.querySelector('.tick').classList.add('done');
+      row.querySelector('.task-text').classList.add('done-text');
+    }
+  });
+
+  // Auto-grey past sections
+  const sectionDates = {
+    'Thursday 5 June':   new Date('2026-06-05'),
+    'Friday 6 June':     new Date('2026-06-06'),
+    'Monday 9 June':     new Date('2026-06-09'),
+    'Tuesday 10 June':   new Date('2026-06-10'),
+    'Wednesday 11 June': new Date('2026-06-11'),
+    'Thursday':          new Date('2026-06-12'),
+    'Tuesday 16 June':   new Date('2026-06-16'),
+  };
+
+  const today = new Date();
+  today.setHours(0,0,0,0);
+
+  document.querySelectorAll('.section-label').forEach(label => {
+    const text = label.textContent;
+    for (const [key, date] of Object.entries(sectionDates)) {
+      if (text.includes(key) && date < today) {
+        label.style.opacity = '0.4';
+        let el = label.nextElementSibling;
+        while (el && !el.classList.contains('section-label')) {
+          el.style.opacity = '0.4';
+          el = el.nextElementSibling;
+        }
+        break;
+      }
+    }
+  });
 </script>
 </body>
 </html>
