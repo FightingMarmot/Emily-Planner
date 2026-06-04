@@ -185,6 +185,34 @@
     }
 
     .legend-dot { width: 6px; height: 6px; border-radius: 50%; }
+
+    @keyframes shoot {
+      0%   { transform: translate(0, 0) rotate(-35deg); opacity: 1; }
+      100% { transform: translate(110vw, 40vh) rotate(-35deg); opacity: 0; }
+    }
+    .shooting-star {
+      position: fixed;
+      top: 12vh;
+      left: -80px;
+      width: 5px;
+      height: 5px;
+      background: #f5e6c8;
+      border-radius: 50%;
+      box-shadow: 0 0 6px 2px #f5e6c8, 0 0 14px 5px #e8c97a;
+      animation: shoot 1.4s ease-in forwards;
+      pointer-events: none;
+      z-index: 9999;
+    }
+    .shooting-star::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      right: 5px;
+      transform: translateY(-50%);
+      height: 2px;
+      width: 140px;
+      background: linear-gradient(to left, rgba(245,230,200,0.7), transparent);
+    }
   </style>
 </head>
 <body>
@@ -408,9 +436,18 @@
           document.getElementById('pom-time').style.color = '#3a3530';
           pomDisplay(pomSeconds);
           pomChime(pomOnBreak);
+          shootingStar();
         }
       }, 1000);
     }
+  }
+
+  function shootingStar() {
+    const star = document.createElement('div');
+    star.className = 'shooting-star';
+    star.style.top = (8 + Math.random() * 25) + 'vh';
+    document.body.appendChild(star);
+    setTimeout(() => star.remove(), 1500);
   }
 
   function pomChime(isBreak) {
