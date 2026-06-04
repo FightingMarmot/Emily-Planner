@@ -407,9 +407,30 @@
           document.getElementById('pom-btn').textContent = 'START';
           document.getElementById('pom-time').style.color = '#3a3530';
           pomDisplay(pomSeconds);
+          pomChime(pomOnBreak);
         }
       }, 1000);
     }
+  }
+
+  function pomChime(isBreak) {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const notes = isBreak ? [523, 659, 784] : [784, 659, 523];
+      notes.forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0, ctx.currentTime + i * 0.25);
+        gain.gain.linearRampToValueAtTime(0.3, ctx.currentTime + i * 0.25 + 0.05);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.25 + 0.6);
+        osc.start(ctx.currentTime + i * 0.25);
+        osc.stop(ctx.currentTime + i * 0.25 + 0.6);
+      });
+    } catch(e) {}
   }
 
   function pomReset(e) {
