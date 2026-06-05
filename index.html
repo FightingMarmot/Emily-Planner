@@ -766,11 +766,11 @@
 
   // Auto-grey past sections
   const sectionDates = {
-    'Thursday 4 June':   new Date('2026-06-05'),
-    'Friday 5 June — Today':   new Date('2026-06-06'),
-    'Tuesday 9 June':     new Date('2026-06-09'),
-    'Wednesday 10 June':   new Date('2026-06-10'),
-    'Thursday 11 June': new Date('2026-06-11'),
+    'Thursday 4 June':   new Date('2026-06-04'),
+    'Friday 5 June':     new Date('2026-06-05'),
+    'Tuesday 9 June':    new Date('2026-06-09'),
+    'Wednesday 10 June': new Date('2026-06-10'),
+    'Thursday 11 June':  new Date('2026-06-11'),
     'Friday–Saturday 12–13 June': new Date('2026-06-12'),
     'Tuesday 16 June':   new Date('2026-06-16'),
     'Tuesday 23 June':   new Date('2026-06-23'),
@@ -793,6 +793,25 @@
       }
     }
   });
+
+  // SAFETY NET: never let a task stay hidden. If any task row is hidden
+  // without a visible moved copy existing, force it back to visible.
+  // A planner must never silently lose a task.
+  (function safeguardTasks() {
+    document.querySelectorAll('.task-row').forEach(function(row) {
+      var hidden = row.style.display === 'none' ||
+                   window.getComputedStyle(row).display === 'none';
+      if (hidden) {
+        var id = row.dataset.id;
+        var movedCopy = id ? document.querySelector('[data-moved-from="' + id + '"]') : null;
+        // If there's no visible moved copy, this task was hidden in error — restore it.
+        if (!movedCopy) {
+          row.style.display = '';
+          row.style.opacity = row.style.opacity === '0' ? '1' : row.style.opacity;
+        }
+      }
+    });
+  })();
 
   updateClock();
   setInterval(updateClock, 1000);
