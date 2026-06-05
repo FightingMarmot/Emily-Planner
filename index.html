@@ -557,17 +557,19 @@
   function restoreMoves() {
     try {
       var moves = JSON.parse(localStorage.getItem('emi-planner-moves') || '[]');
+      var validMoves = [];
       moves.forEach(function(move) {
         var orig = document.querySelector('[data-id="' + move.originalId + '"]');
-        if (orig) orig.style.display = 'none';
 
         var allSections = document.querySelectorAll('.section-label');
         var targetSection = null;
         allSections.forEach(function(s) { if (s.textContent.includes(move.targetSection)) targetSection = s; });
+
+        // If we can't place the moved task, skip this move entirely and drop it (don't hide the original)
         if (!targetSection) return;
 
         var existingMoved = document.querySelector('[data-moved-from="' + move.originalId + '"]');
-        if (existingMoved) return;
+        if (existingMoved) { validMoves.push(move); return; }
 
         var newRow = document.createElement('div');
         newRow.className = 'task-row';
@@ -607,7 +609,14 @@
         newRow.addEventListener('click', function() { tick_row(newRow); });
 
         targetSection.insertAdjacentElement('afterend', newRow);
+
+        // Only now that the clone is safely placed, hide the original
+        if (orig) orig.style.display = 'none';
+        validMoves.push(move);
       });
+
+      // Persist only the moves we could successfully apply (clears stale ones)
+      localStorage.setItem('emi-planner-moves', JSON.stringify(validMoves));
     } catch(e) {}
   }
 
