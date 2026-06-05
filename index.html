@@ -639,9 +639,6 @@
     pomDisplay(pomSeconds);
   }
 
-  updateClock();
-  setInterval(updateClock, 1000);
-
   // Restore saved tick states
   function getSavedTicks() {
     try { return JSON.parse(localStorage.getItem('emi-planner-ticks') || '{}'); } catch { return {}; }
@@ -706,6 +703,9 @@
       }
     }
   });
+
+  updateClock();
+  setInterval(updateClock, 1000);
 </script>
 <script>
   function spawnCat() {
