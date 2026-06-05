@@ -509,38 +509,56 @@
 
   function restoreMoves() {
     try {
-      const moves = JSON.parse(localStorage.getItem('emi-planner-moves') || '[]');
-      moves.forEach(move => {
-        // Hide original row
-        const orig = document.querySelector(\`[data-id="\${move.originalId}"]\`);
+      var moves = JSON.parse(localStorage.getItem('emi-planner-moves') || '[]');
+      moves.forEach(function(move) {
+        var orig = document.querySelector('[data-id="' + move.originalId + '"]');
         if (orig) orig.style.display = 'none';
 
-        // Find target section
-        const allSections = document.querySelectorAll('.section-label');
-        let targetSection = null;
-        allSections.forEach(s => { if (s.textContent.includes(move.targetSection)) targetSection = s; });
+        var allSections = document.querySelectorAll('.section-label');
+        var targetSection = null;
+        allSections.forEach(function(s) { if (s.textContent.includes(move.targetSection)) targetSection = s; });
         if (!targetSection) return;
 
-        // Check not already added
-        const existingMoved = document.querySelector(\`[data-moved-from="\${move.originalId}"]\`);
+        var existingMoved = document.querySelector('[data-moved-from="' + move.originalId + '"]');
         if (existingMoved) return;
 
-        // Build new row
-        const newRow = document.createElement('div');
+        var newRow = document.createElement('div');
         newRow.className = 'task-row';
         newRow.dataset.id = 'task-moved-' + move.originalId;
         newRow.dataset.movedFrom = move.originalId;
-        newRow.innerHTML = \`
-          <div class="tick"></div>
-          <div class="\${move.dotClass}"></div>
-          <span class="task-time \${move.taskTime}">\${move.taskTimeText}</span>
-          <div class="task-body">
-            <div class="task-text">\${move.taskHTML}</div>
-            \${move.taskSub ? \`<div class="task-sub">\${move.taskSub}</div>\` : ''}
-          </div>
-          <span class="down-arrow" title="Move to next day">↓</span>
-        \`;
-        newRow.querySelector('.down-arrow').addEventListener('click', (e) => moveToNextDay(e, newRow.querySelector('.down-arrow')));
+
+        var tick = document.createElement('div');
+        tick.className = 'tick';
+        var dot = document.createElement('div');
+        dot.className = move.dotClass;
+        var time = document.createElement('span');
+        time.className = 'task-time ' + move.taskTime;
+        time.textContent = move.taskTimeText;
+        var body = document.createElement('div');
+        body.className = 'task-body';
+        var text = document.createElement('div');
+        text.className = 'task-text';
+        text.innerHTML = move.taskHTML;
+        body.appendChild(text);
+        if (move.taskSub) {
+          var sub = document.createElement('div');
+          sub.className = 'task-sub';
+          sub.innerHTML = move.taskSub;
+          body.appendChild(sub);
+        }
+        var arrow = document.createElement('span');
+        arrow.className = 'down-arrow';
+        arrow.title = 'Move to next day';
+        arrow.textContent = '↓';
+        arrow.addEventListener('click', function(e) { moveToNextDay(e, arrow); });
+
+        newRow.appendChild(tick);
+        newRow.appendChild(dot);
+        newRow.appendChild(time);
+        newRow.appendChild(body);
+        newRow.appendChild(arrow);
+        newRow.addEventListener('click', function() { tick_row(newRow); });
+
         targetSection.insertAdjacentElement('afterend', newRow);
       });
     } catch(e) {}
@@ -646,6 +664,16 @@
 
   function saveTicks(ticks) {
     localStorage.setItem('emi-planner-ticks', JSON.stringify(ticks));
+  }
+
+  function tick_row(row) {
+    const t = row.querySelector('.tick');
+    const txt = row.querySelector('.task-text');
+    t.classList.toggle('done');
+    txt.classList.toggle('done-text');
+    const ticks = getSavedTicks();
+    ticks[row.dataset.id] = t.classList.contains('done');
+    saveTicks(ticks);
   }
 
   function tick(row) {
