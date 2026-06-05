@@ -274,7 +274,7 @@
     </div>
   </div>
 
-  <div class="section-label">Friday 5 June — Today</div>
+  <div class="section-label">Thursday 4 June</div>
 
   <div class="task-row" onclick="tick(this)">
     <div class="tick"></div><div class="dot dot-urgent"></div>
@@ -311,7 +311,7 @@
   
     <span class="down-arrow" onclick="moveToNextDay(event, this)" title="Move to next day">↓</span>
   </div>
-  <div class="section-label">Saturday 6 June</div>
+  <div class="section-label">Friday 6 June — Today</div>
 
   <div class="task-row" onclick="tick(this)">
     <div class="tick"></div><div class="dot dot-fixed"></div>
@@ -451,8 +451,8 @@
   const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
   const SECTION_ORDER = [
-    'Friday 5 June',
-    'Saturday 6 June',
+    'Thursday 4 June',
+    'Friday 6 June — Today',
     'Monday 9 June',
     'Tuesday 10 June',
     'Wednesday 11 June',
@@ -710,8 +710,8 @@
 
   // Auto-grey past sections
   const sectionDates = {
-    'Friday 5 June':     new Date('2026-06-05'),
-    'Saturday 6 June':   new Date('2026-06-06'),
+    'Thursday 4 June':   new Date('2026-06-05'),
+    'Friday 6 June — Today':   new Date('2026-06-06'),
     'Monday 9 June':     new Date('2026-06-09'),
     'Tuesday 10 June':   new Date('2026-06-10'),
     'Wednesday 11 June': new Date('2026-06-11'),
