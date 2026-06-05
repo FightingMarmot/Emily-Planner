@@ -266,7 +266,7 @@
   <div class="top">
     <div class="title-block">
       <div class="label">WEEK PLANNER</div>
-      <div class="name">Emi's <em>Work</em> Planner</div>
+      <div class="name">Emi's <em>Work</em> Planner <span id="planner-month" style="color:#a09888;font-size:18px;"></span></div>
     </div>
     <div class="clock-block">
       <div class="clock-display" id="clock">--:--:--</div>
@@ -627,6 +627,8 @@
     const s = String(now.getSeconds()).padStart(2,'0');
     document.getElementById('clock').textContent = h + ':' + m + ':' + s;
     document.getElementById('dateline').textContent = DAYS[now.getDay()] + ' ' + now.getDate() + ' ' + MONTHS[now.getMonth()];
+    const monthEl = document.getElementById('planner-month');
+    if (monthEl) monthEl.textContent = '(' + MONTHS[now.getMonth()] + ')';
   }
 
   // Pomodoro timer
