@@ -661,9 +661,14 @@
     saveTicks(ticks);
   }
 
-  // Assign IDs and restore tick states on load
-  document.querySelectorAll('.task-row').forEach((row, i) => {
-    row.dataset.id = 'task-' + i;
+  // Assign stable IDs based on task text content
+  document.querySelectorAll('.task-row').forEach((row) => {
+    if (!row.dataset.id) {
+      const txt = row.querySelector('.task-text');
+      if (txt) {
+        row.dataset.id = 'task-' + txt.textContent.trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').substring(0, 40);
+      }
+    }
   });
 
   restoreMoves();
