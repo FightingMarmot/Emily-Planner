@@ -186,15 +186,19 @@
 
     .legend-dot { width: 6px; height: 6px; border-radius: 50%; }
 
-    .down-arrow {
+    .move-arrows {
       margin-left: auto;
-      width: 15px;
-      height: 15px;
-      border: 1px solid #c4a0a0;
-      border-radius: 50%;
-      flex-shrink: 0;
       align-self: flex-start;
       margin-top: 2px;
+      display: flex;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+    .down-arrow, .up-arrow {
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      flex-shrink: 0;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -202,10 +206,18 @@
       transition: all 0.2s;
       user-select: none;
       font-size: 9px;
-      color: #c4a0a0;
       line-height: 1;
     }
+    .down-arrow {
+      border: 1px solid #c4a0a0;
+      color: #c4a0a0;
+    }
     .down-arrow:hover { background: #c4a0a0; color: #f5f2ed; border-color: #c4a0a0; }
+    .up-arrow {
+      border: 1px solid #8fa8b5;
+      color: #8fa8b5;
+    }
+    .up-arrow:hover { background: #8fa8b5; color: #f5f2ed; border-color: #8fa8b5; }
 
 
     @keyframes shoot {
@@ -281,49 +293,49 @@
     <span class="task-time urgent">Now</span>
     <div class="task-body"><div class="task-text">Chase Zoom link — S6 ideas meeting</div></div>
   
-    <span class="down-arrow" onclick="moveToNextDay(event, this)" title="Move to next day">↓</span>
+    <span class="move-arrows"><span class="up-arrow" onclick="moveTask(event, this, -1)" title="Move to previous day">↑</span><span class="down-arrow" onclick="moveTask(event, this, 1)" title="Move to next day">↓</span></span>
   </div>
   <div class="task-row" onclick="tick(this)">
     <div class="tick"></div><div class="dot dot-urgent"></div>
     <span class="task-time urgent">By 6pm</span>
     <div class="task-body"><div class="task-text">Email Nuffield Foundation — new commissioned podcast</div></div>
   
-    <span class="down-arrow" onclick="moveToNextDay(event, this)" title="Move to next day">↓</span>
+    <span class="move-arrows"><span class="up-arrow" onclick="moveTask(event, this, -1)" title="Move to previous day">↑</span><span class="down-arrow" onclick="moveTask(event, this, 1)" title="Move to next day">↓</span></span>
   </div>
   <div class="task-row" onclick="tick(this)">
     <div class="tick"></div><div class="dot dot-urgent"></div>
     <span class="task-time urgent">Today</span>
     <div class="task-body"><div class="task-text">Email Zeynep — script length</div></div>
   
-    <span class="down-arrow" onclick="moveToNextDay(event, this)" title="Move to next day">↓</span>
+    <span class="move-arrows"><span class="up-arrow" onclick="moveTask(event, this, -1)" title="Move to previous day">↑</span><span class="down-arrow" onclick="moveTask(event, this, 1)" title="Move to next day">↓</span></span>
   </div>
   <div class="task-row" onclick="tick(this)">
     <div class="tick"></div><div class="dot dot-prep"></div>
     <span class="task-time">Before 6pm</span>
     <div class="task-body"><div class="task-text">Prep S6 ideas + Barrie &amp; Brotton interview questions</div></div>
   
-    <span class="down-arrow" onclick="moveToNextDay(event, this)" title="Move to next day">↓</span>
+    <span class="move-arrows"><span class="up-arrow" onclick="moveTask(event, this, -1)" title="Move to previous day">↑</span><span class="down-arrow" onclick="moveTask(event, this, 1)" title="Move to next day">↓</span></span>
   </div>
   <div class="task-row" onclick="tick(this)">
     <div class="tick"></div><div class="dot dot-prep"></div>
     <span class="task-time">Later today</span>
     <div class="task-body"><div class="task-text">Look at Emily Gilbert's briefs</div></div>
   
-    <span class="down-arrow" onclick="moveToNextDay(event, this)" title="Move to next day">↓</span>
+    <span class="move-arrows"><span class="up-arrow" onclick="moveTask(event, this, -1)" title="Move to previous day">↑</span><span class="down-arrow" onclick="moveTask(event, this, 1)" title="Move to next day">↓</span></span>
   </div>
   <div class="task-row" onclick="tick(this)">
     <div class="tick"></div><div class="dot dot-urgent"></div>
     <span class="task-time urgent">Today</span>
     <div class="task-body"><div class="task-text">Respond to Amy (We Society) email</div></div>
   
-    <span class="down-arrow" onclick="moveToNextDay(event, this)" title="Move to next day">↓</span>
+    <span class="move-arrows"><span class="up-arrow" onclick="moveTask(event, this, -1)" title="Move to previous day">↑</span><span class="down-arrow" onclick="moveTask(event, this, 1)" title="Move to next day">↓</span></span>
   </div>
   <div class="task-row" onclick="tick(this)">
     <div class="tick"></div><div class="dot dot-prep"></div>
     <span class="task-time">By 2pm</span>
     <div class="task-body"><div class="task-text">Prepare for What's Your Map? idea</div></div>
   
-    <span class="down-arrow" onclick="moveToNextDay(event, this)" title="Move to next day">↓</span>
+    <span class="move-arrows"><span class="up-arrow" onclick="moveTask(event, this, -1)" title="Move to previous day">↑</span><span class="down-arrow" onclick="moveTask(event, this, 1)" title="Move to next day">↓</span></span>
   </div>
   <div class="section-label">Friday 5 June — Today</div>
 
@@ -335,7 +347,7 @@
       <div class="task-sub">Zoom</div>
     </div>
   
-    <span class="down-arrow" onclick="moveToNextDay(event, this)" title="Move to next day">↓</span>
+    <span class="move-arrows"><span class="up-arrow" onclick="moveTask(event, this, -1)" title="Move to previous day">↑</span><span class="down-arrow" onclick="moveTask(event, this, 1)" title="Move to next day">↓</span></span>
   </div>
   <div class="task-row" onclick="tick(this)">
     <div class="tick"></div><div class="dot dot-wym"></div>
@@ -345,7 +357,7 @@
       <div class="task-sub">WYM · Producing + recording episode</div>
     </div>
   
-    <span class="down-arrow" onclick="moveToNextDay(event, this)" title="Move to next day">↓</span>
+    <span class="move-arrows"><span class="up-arrow" onclick="moveTask(event, this, -1)" title="Move to previous day">↑</span><span class="down-arrow" onclick="moveTask(event, this, 1)" title="Move to next day">↓</span></span>
   </div>
   <div class="section-label">Monday 8 June</div>
 
@@ -357,7 +369,7 @@
       <div class="task-sub"><a href="https://arvon.zoom.us/j/4627606313?pwd=YS5soWByBxIwqCEAz3SxK9dcDHFKYX.1" target="_blank" style="color:#5e88a8;text-decoration:none;">Join Zoom</a> · Personal</div>
     </div>
   
-    <span class="down-arrow" onclick="moveToNextDay(event, this)" title="Move to next day">↓</span>
+    <span class="move-arrows"><span class="up-arrow" onclick="moveTask(event, this, -1)" title="Move to previous day">↑</span><span class="down-arrow" onclick="moveTask(event, this, 1)" title="Move to next day">↓</span></span>
   </div>
   <div class="task-row" onclick="tick(this)">
     <div class="tick"></div><div class="dot dot-wym"></div>
@@ -367,14 +379,14 @@
       <div class="task-sub">WYM · ~1 hour</div>
     </div>
   
-    <span class="down-arrow" onclick="moveToNextDay(event, this)" title="Move to next day">↓</span>
+    <span class="move-arrows"><span class="up-arrow" onclick="moveTask(event, this, -1)" title="Move to previous day">↑</span><span class="down-arrow" onclick="moveTask(event, this, 1)" title="Move to next day">↓</span></span>
   </div>
   <div class="task-row" onclick="tick(this)">
     <div class="tick"></div><div class="dot dot-urgent"></div>
     <span class="task-time urgent">2:00 pm</span>
     <div class="task-body"><div class="task-text">Respond to Sam Stone's email</div><div class="task-sub">~10 mins</div></div>
   
-    <span class="down-arrow" onclick="moveToNextDay(event, this)" title="Move to next day">↓</span>
+    <span class="move-arrows"><span class="up-arrow" onclick="moveTask(event, this, -1)" title="Move to previous day">↑</span><span class="down-arrow" onclick="moveTask(event, this, 1)" title="Move to next day">↓</span></span>
   </div>
   <div class="task-row" onclick="tick(this)">
     <div class="tick"></div><div class="dot dot-wym"></div>
@@ -384,14 +396,14 @@
       <div class="task-sub">WYM</div>
     </div>
   
-    <span class="down-arrow" onclick="moveToNextDay(event, this)" title="Move to next day">↓</span>
+    <span class="move-arrows"><span class="up-arrow" onclick="moveTask(event, this, -1)" title="Move to previous day">↑</span><span class="down-arrow" onclick="moveTask(event, this, 1)" title="Move to next day">↓</span></span>
   </div>
   <div class="task-row" onclick="tick(this)">
     <div class="tick"></div><div class="dot dot-fixed"></div>
     <span class="task-time blue">3:00 pm</span>
     <div class="task-body"><div class="task-text">Meeting — Daniel</div><div class="task-sub">~30 mins</div></div>
   
-    <span class="down-arrow" onclick="moveToNextDay(event, this)" title="Move to next day">↓</span>
+    <span class="move-arrows"><span class="up-arrow" onclick="moveTask(event, this, -1)" title="Move to previous day">↑</span><span class="down-arrow" onclick="moveTask(event, this, 1)" title="Move to next day">↓</span></span>
   </div>
   <div class="task-row" onclick="tick(this)">
     <div class="tick"></div><div class="dot dot-wym"></div>
@@ -401,14 +413,14 @@
       <div class="task-sub">WYM</div>
     </div>
   
-    <span class="down-arrow" onclick="moveToNextDay(event, this)" title="Move to next day">↓</span>
+    <span class="move-arrows"><span class="up-arrow" onclick="moveTask(event, this, -1)" title="Move to previous day">↑</span><span class="down-arrow" onclick="moveTask(event, this, 1)" title="Move to next day">↓</span></span>
   </div>
   <div class="task-row" onclick="tick(this)">
     <div class="tick"></div><div class="dot dot-we"></div>
     <span class="task-time purple">6:30 pm</span>
     <div class="task-body"><div class="task-text">Reformer pilates</div><div class="task-sub">Personal</div></div>
   
-    <span class="down-arrow" onclick="moveToNextDay(event, this)" title="Move to next day">↓</span>
+    <span class="move-arrows"><span class="up-arrow" onclick="moveTask(event, this, -1)" title="Move to previous day">↑</span><span class="down-arrow" onclick="moveTask(event, this, 1)" title="Move to next day">↓</span></span>
   </div>
   <div class="section-label">Tuesday 9 June</div>
 
@@ -420,7 +432,7 @@
       <div class="task-sub"><a href="https://us06web.zoom.us/j/87148632426" target="_blank" style="color:#5e88a8;text-decoration:none;">Join Zoom</a> · Fortnightly</div>
     </div>
   
-    <span class="down-arrow" onclick="moveToNextDay(event, this)" title="Move to next day">↓</span>
+    <span class="move-arrows"><span class="up-arrow" onclick="moveTask(event, this, -1)" title="Move to previous day">↑</span><span class="down-arrow" onclick="moveTask(event, this, 1)" title="Move to next day">↓</span></span>
   </div>
   <div class="task-row" onclick="tick(this)">
     <div class="tick"></div><div class="dot dot-wym"></div>
@@ -430,14 +442,14 @@
       <div class="task-sub">WYM</div>
     </div>
   
-    <span class="down-arrow" onclick="moveToNextDay(event, this)" title="Move to next day">↓</span>
+    <span class="move-arrows"><span class="up-arrow" onclick="moveTask(event, this, -1)" title="Move to previous day">↑</span><span class="down-arrow" onclick="moveTask(event, this, 1)" title="Move to next day">↓</span></span>
   </div>
   <div class="task-row" onclick="tick(this)">
     <div class="tick"></div><div class="dot dot-prep"></div>
     <span class="task-time">Afternoon</span>
     <div class="task-body"><div class="task-text">BBC meeting prep — Dodd &amp; Shakespeare</div></div>
   
-    <span class="down-arrow" onclick="moveToNextDay(event, this)" title="Move to next day">↓</span>
+    <span class="move-arrows"><span class="up-arrow" onclick="moveTask(event, this, -1)" title="Move to previous day">↑</span><span class="down-arrow" onclick="moveTask(event, this, 1)" title="Move to next day">↓</span></span>
   </div>
   <div class="section-label">Wednesday 10 June</div>
 
@@ -449,7 +461,7 @@
       <div class="task-sub"><a href="https://us06web.zoom.us/j/84451997045" target="_blank" style="color:#5e88a8;text-decoration:none;">Join Zoom</a> · Head of Visualised Radio, BBC</div>
     </div>
   
-    <span class="down-arrow" onclick="moveToNextDay(event, this)" title="Move to next day">↓</span>
+    <span class="move-arrows"><span class="up-arrow" onclick="moveTask(event, this, -1)" title="Move to previous day">↑</span><span class="down-arrow" onclick="moveTask(event, this, 1)" title="Move to next day">↓</span></span>
   </div>
   <div class="task-row" onclick="tick(this)">
     <div class="tick"></div><div class="dot dot-wym"></div>
@@ -459,14 +471,14 @@
       <div class="task-sub">WYM</div>
     </div>
   
-    <span class="down-arrow" onclick="moveToNextDay(event, this)" title="Move to next day">↓</span>
+    <span class="move-arrows"><span class="up-arrow" onclick="moveTask(event, this, -1)" title="Move to previous day">↑</span><span class="down-arrow" onclick="moveTask(event, this, 1)" title="Move to next day">↓</span></span>
   </div>
   <div class="task-row" onclick="tick(this)">
     <div class="tick"></div><div class="dot dot-prep"></div>
     <span class="task-time">Afternoon</span>
     <div class="task-body"><div class="task-text">Final BBC prep + test Teams link</div></div>
   
-    <span class="down-arrow" onclick="moveToNextDay(event, this)" title="Move to next day">↓</span>
+    <span class="move-arrows"><span class="up-arrow" onclick="moveTask(event, this, -1)" title="Move to previous day">↑</span><span class="down-arrow" onclick="moveTask(event, this, 1)" title="Move to next day">↓</span></span>
   </div>
   <div class="section-label">Thursday 11 June</div>
 
@@ -478,7 +490,7 @@
       <div class="task-sub"><a href="https://teams.microsoft.com/meet/391997769907896?p=l24ohKvVrxhCWY0Pcd" target="_blank" style="color:#5e88a8;text-decoration:none;">Join on Teams</a> · ID: 391 997 769 907 896 · PW: YM2vi7jS</div>
     </div>
   
-    <span class="down-arrow" onclick="moveToNextDay(event, this)" title="Move to next day">↓</span>
+    <span class="move-arrows"><span class="up-arrow" onclick="moveTask(event, this, -1)" title="Move to previous day">↑</span><span class="down-arrow" onclick="moveTask(event, this, 1)" title="Move to next day">↓</span></span>
   </div>
   <div class="section-label">Friday–Saturday 12–13 June</div>
 
@@ -490,7 +502,7 @@
       <div class="task-sub">WYM · Out 1 July</div>
     </div>
   
-    <span class="down-arrow" onclick="moveToNextDay(event, this)" title="Move to next day">↓</span>
+    <span class="move-arrows"><span class="up-arrow" onclick="moveTask(event, this, -1)" title="Move to previous day">↑</span><span class="down-arrow" onclick="moveTask(event, this, 1)" title="Move to next day">↓</span></span>
   </div>
   <div class="task-row" onclick="tick(this)">
     <div class="tick"></div><div class="dot dot-wym"></div>
@@ -500,7 +512,7 @@
       <div class="task-sub">WYM</div>
     </div>
   
-    <span class="down-arrow" onclick="moveToNextDay(event, this)" title="Move to next day">↓</span>
+    <span class="move-arrows"><span class="up-arrow" onclick="moveTask(event, this, -1)" title="Move to previous day">↑</span><span class="down-arrow" onclick="moveTask(event, this, 1)" title="Move to next day">↓</span></span>
   </div>
   <div class="section-label">Tuesday 16 June — We Society</div>
 
@@ -512,7 +524,7 @@
       <div class="task-sub">We Society · Research Grants &amp; Programmes Manager (Education), Nuffield Foundation</div>
     </div>
   
-    <span class="down-arrow" onclick="moveToNextDay(event, this)" title="Move to next day">↓</span>
+    <span class="move-arrows"><span class="up-arrow" onclick="moveTask(event, this, -1)" title="Move to previous day">↑</span><span class="down-arrow" onclick="moveTask(event, this, 1)" title="Move to next day">↓</span></span>
   </div>
   <div class="task-row" onclick="tick(this)">
     <div class="tick"></div><div class="dot dot-we"></div>
@@ -522,7 +534,7 @@
       <div class="task-sub">We Society · Edward Orsborn Prof. of US Politics &amp; Political History, Oxford</div>
     </div>
   
-    <span class="down-arrow" onclick="moveToNextDay(event, this)" title="Move to next day">↓</span>
+    <span class="move-arrows"><span class="up-arrow" onclick="moveTask(event, this, -1)" title="Move to previous day">↑</span><span class="down-arrow" onclick="moveTask(event, this, 1)" title="Move to next day">↓</span></span>
   </div>
   <div class="section-label">Tuesday 23 June</div>
 
@@ -534,7 +546,7 @@
       <div class="task-sub">Zoom link TBC</div>
     </div>
   
-    <span class="down-arrow" onclick="moveToNextDay(event, this)" title="Move to next day">↓</span>
+    <span class="move-arrows"><span class="up-arrow" onclick="moveTask(event, this, -1)" title="Move to previous day">↑</span><span class="down-arrow" onclick="moveTask(event, this, 1)" title="Move to next day">↓</span></span>
   </div>
   <div id="pom" style="position:fixed;bottom:24px;right:24px;background:#f5f2ed;border:1px solid #ddd8d0;border-radius:16px;padding:20px 28px;text-align:center;box-shadow:0 2px 12px rgba(0,0,0,0.1);font-family:'DM Mono',monospace;min-width:180px;cursor:pointer;user-select:none;">
     <div id="pom-label" style="font-size:12px;letter-spacing:.14em;color:#b0a898;margin-bottom:8px;text-transform:uppercase">Focus</div>
@@ -561,16 +573,17 @@
 
   const SECTION_ORDER = [
     'Thursday 4 June',
-    'Friday 5 June — Today',
+    'Friday 5 June',
+    'Monday 8 June',
     'Tuesday 9 June',
     'Wednesday 10 June',
     'Thursday 11 June',
-    'Thursday',
+    'Friday–Saturday 12–13 June',
     'Tuesday 16 June',
     'Tuesday 23 June'
   ];
 
-  async function moveToNextDay(e, arrow) {
+  async function moveTask(e, arrow, dir) {
     e.stopPropagation();
     const row = arrow.closest('.task-row');
     let section = row.previousElementSibling;
@@ -581,13 +594,15 @@
 
     const currentText = section.textContent.trim();
     const currentIdx = SECTION_ORDER.findIndex(s => currentText.includes(s));
-    if (currentIdx === -1 || currentIdx >= SECTION_ORDER.length - 1) return;
+    if (currentIdx === -1) return;
+    const targetIdx = currentIdx + dir;
+    if (targetIdx < 0 || targetIdx >= SECTION_ORDER.length) return;
 
-    const nextSectionText = SECTION_ORDER[currentIdx + 1];
+    const targetSectionText = SECTION_ORDER[targetIdx];
     const allSections = document.querySelectorAll('.section-label');
-    let nextSection = null;
-    allSections.forEach(s => { if (s.textContent.includes(nextSectionText)) nextSection = s; });
-    if (!nextSection) return;
+    let targetSection = null;
+    allSections.forEach(s => { if (s.textContent.includes(targetSectionText)) targetSection = s; });
+    if (!targetSection) return;
 
     const originalId = row.dataset.id;
     const taskHTML = row.querySelector('.task-text').innerHTML;
@@ -599,17 +614,17 @@
     // Save move to localStorage
     try {
       const moves = JSON.parse(localStorage.getItem('emi-planner-moves') || '[]');
-      moves.push({ originalId, taskHTML, taskSub, taskTime, taskTimeText, dotClass, targetSection: nextSectionText });
+      moves.push({ originalId, taskHTML, taskSub, taskTime, taskTimeText, dotClass, targetSection: targetSectionText });
       localStorage.setItem('emi-planner-moves', JSON.stringify(moves));
     } catch(e) {}
 
+    // Clone keeps its inline onclick handlers, so no re-wiring needed
     const clone = row.cloneNode(true);
-    clone.querySelector('.down-arrow').addEventListener('click', (ev) => moveToNextDay(ev, clone.querySelector('.down-arrow')));
     clone.dataset.id = 'task-moved-' + Date.now();
     clone.querySelector('.tick').classList.remove('done');
     clone.querySelector('.task-text').classList.remove('done-text');
     clone.style.opacity = '0';
-    nextSection.insertAdjacentElement('afterend', clone);
+    targetSection.insertAdjacentElement('afterend', clone);
     setTimeout(() => { clone.style.transition = 'opacity 0.3s'; clone.style.opacity = '1'; }, 50);
 
     row.style.transition = 'opacity 0.3s';
@@ -658,18 +673,16 @@
           sub.innerHTML = move.taskSub;
           body.appendChild(sub);
         }
-        var arrow = document.createElement('span');
-        arrow.className = 'down-arrow';
-        arrow.title = 'Move to next day';
-        arrow.textContent = '↓';
-        arrow.addEventListener('click', function(e) { moveToNextDay(e, arrow); });
+        var arrows = document.createElement('span');
+        arrows.className = 'move-arrows';
+        arrows.innerHTML = '<span class="up-arrow" onclick="moveTask(event, this, -1)" title="Move to previous day">↑</span><span class="down-arrow" onclick="moveTask(event, this, 1)" title="Move to next day">↓</span>';
 
+        newRow.setAttribute('onclick', 'tick(this)');
         newRow.appendChild(tick);
         newRow.appendChild(dot);
         newRow.appendChild(time);
         newRow.appendChild(body);
-        newRow.appendChild(arrow);
-        newRow.addEventListener('click', function() { tick_row(newRow); });
+        newRow.appendChild(arrows);
 
         targetSection.insertAdjacentElement('afterend', newRow);
 
