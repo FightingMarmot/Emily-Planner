@@ -639,6 +639,10 @@
       moves.forEach(function(move) {
         var orig = document.querySelector('[data-id="' + move.originalId + '"]');
 
+        // If the original task no longer exists, this is a stale move — drop it
+        // entirely so it can't spawn an orphan duplicate.
+        if (!orig) return;
+
         var allSections = document.querySelectorAll('.section-label');
         var targetSection = null;
         allSections.forEach(function(s) { if (s.textContent.includes(move.targetSection)) targetSection = s; });
@@ -647,7 +651,7 @@
         if (!targetSection) return;
 
         var existingMoved = document.querySelector('[data-moved-from="' + move.originalId + '"]');
-        if (existingMoved) { validMoves.push(move); return; }
+        if (existingMoved) { orig.style.display = 'none'; validMoves.push(move); return; }
 
         var newRow = document.createElement('div');
         newRow.className = 'task-row';
