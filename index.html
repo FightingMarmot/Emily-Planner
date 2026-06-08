@@ -372,7 +372,17 @@
   <div class="task-row" onclick="tick(this)">
     <div class="tick"></div><div class="dot dot-urgent"></div>
     <span class="task-time urgent">2:00 pm</span>
-    <div class="task-body"><div class="task-text">Respond to Sam Stone's email</div></div>
+    <div class="task-body"><div class="task-text">Respond to Sam Stone's email</div><div class="task-sub">~10 mins</div></div>
+  
+    <span class="down-arrow" onclick="moveToNextDay(event, this)" title="Move to next day">↓</span>
+  </div>
+  <div class="task-row" onclick="tick(this)">
+    <div class="tick"></div><div class="dot dot-wym"></div>
+    <span class="task-time wym">2:10 pm</span>
+    <div class="task-body">
+      <div class="task-text">Back to assembly edit — David Barrie</div>
+      <div class="task-sub">WYM</div>
+    </div>
   
     <span class="down-arrow" onclick="moveToNextDay(event, this)" title="Move to next day">↓</span>
   </div>
