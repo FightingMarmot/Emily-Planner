@@ -333,7 +333,7 @@
   
     <span class="move-arrows"><span class="up-arrow" onclick="moveTask(event, this, -1)" title="Move to previous day">↑</span><span class="down-arrow" onclick="moveTask(event, this, 1)" title="Move to next day">↓</span></span>
   </div>
-  <div class="section-label">Friday 5 June — Today</div>
+  <div class="section-label">Friday 5 June</div>
 
   <div class="task-row" onclick="tick(this)">
     <div class="tick"></div><div class="dot dot-fixed"></div>
@@ -857,6 +857,24 @@
 
   const today = new Date();
   today.setHours(0,0,0,0);
+
+  // Dynamically mark the section matching today's actual date with "— Today".
+  // This keeps the marker correct no matter the real date, avoiding stale labels.
+  (function markToday() {
+    document.querySelectorAll('.section-label').forEach(label => {
+      // Strip any pre-existing "— Today" (but leave descriptors like "— We Society")
+      label.textContent = label.textContent.replace(/\s*—\s*Today\s*$/, '');
+      for (const [key, date] of Object.entries(sectionDates)) {
+        if (label.textContent.includes(key)) {
+          const d = new Date(date); d.setHours(0,0,0,0);
+          if (d.getTime() === today.getTime()) {
+            label.textContent = label.textContent + ' — Today';
+          }
+          break;
+        }
+      }
+    });
+  })();
 
   document.querySelectorAll('.section-label').forEach(label => {
     const text = label.textContent;
