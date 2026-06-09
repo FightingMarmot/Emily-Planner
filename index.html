@@ -569,6 +569,18 @@
   
     <span class="move-arrows"><span class="up-arrow" onclick="moveTask(event, this, -1)" title="Move to previous day">↑</span><span class="down-arrow" onclick="moveTask(event, this, 1)" title="Move to next day">↓</span></span>
   </div>
+  <div class="section-label">Wednesday 24 June</div>
+
+  <div class="task-row" onclick="tick(this)">
+    <div class="tick"></div><div class="dot dot-fixed"></div>
+    <span class="task-time blue">TBC</span>
+    <div class="task-body">
+      <div class="task-text">Hugh 'reactive' meeting</div>
+      <div class="task-sub">Archive on 4 idea</div>
+    </div>
+  
+    <span class="move-arrows"><span class="up-arrow" onclick="moveTask(event, this, -1)" title="Move to previous day">↑</span><span class="down-arrow" onclick="moveTask(event, this, 1)" title="Move to next day">↓</span></span>
+  </div>
   <div id="pom" style="position:fixed;bottom:24px;right:24px;background:#f5f2ed;border:1px solid #ddd8d0;border-radius:16px;padding:20px 28px;text-align:center;box-shadow:0 2px 12px rgba(0,0,0,0.1);font-family:'DM Mono',monospace;min-width:180px;cursor:pointer;user-select:none;">
     <div id="pom-label" style="font-size:12px;letter-spacing:.14em;color:#b0a898;margin-bottom:8px;text-transform:uppercase">Focus</div>
     <div id="pom-time" style="font-size:44px;font-weight:300;color:#3a3530;letter-spacing:.04em">25:00</div>
@@ -602,7 +614,8 @@
     'Friday–Saturday 12–13 June',
     'Tuesday 16 June',
     'Monday 22 June',
-    'Tuesday 23 June'
+    'Tuesday 23 June',
+    'Wednesday 24 June'
   ];
 
   async function moveTask(e, arrow, dir) {
@@ -880,6 +893,7 @@
     'Tuesday 16 June':   new Date('2026-06-16'),
     'Monday 22 June':    new Date('2026-06-22'),
     'Tuesday 23 June':   new Date('2026-06-23'),
+    'Wednesday 24 June': new Date('2026-06-24'),
   };
 
   const today = new Date();
