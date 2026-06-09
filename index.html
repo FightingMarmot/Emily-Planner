@@ -95,6 +95,31 @@
       font-weight: 400;
     }
 
+    .header-quote {
+      flex: 1;
+      align-self: center;
+      text-align: center;
+      padding: 0 16px;
+      font-family: 'DM Serif Display', serif;
+      font-style: italic;
+      font-size: 11px;
+      line-height: 1.35;
+      color: #a09888;
+      min-width: 0;
+    }
+    .header-quote .attr {
+      display: block;
+      font-family: 'DM Mono', monospace;
+      font-style: normal;
+      font-size: 8px;
+      letter-spacing: 0.08em;
+      color: #b0a898;
+      margin-top: 3px;
+    }
+    @media (max-width: 480px) {
+      .header-quote { display: none; }
+    }
+
     #past-days { margin-bottom: 6px; }
     #past-days-header {
       font-size: 9px;
@@ -289,6 +314,7 @@
       <div class="label">WEEK PLANNER</div>
       <div class="name">Emi's <em>Work</em> Planner <span id="planner-month" style="color:#a09888;"></span></div>
     </div>
+    <div class="header-quote" id="header-quote"></div>
     <div class="clock-block">
       <div class="clock-display" id="clock">--:--:--</div>
       <div class="clock-date" id="dateline">---</div>
@@ -579,6 +605,45 @@
 <script>
   const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
   const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+  // Daily-rotating line from a classic public-domain poem.
+  // Selection leans toward mountains, heights, striving and journeys.
+  const POEM_LINES = [
+    { line: 'To strive, to seek, to find, and not to yield.', poet: 'Tennyson, “Ulysses”' },
+    { line: '’Tis not too late to seek a newer world.', poet: 'Tennyson, “Ulysses”' },
+    { line: 'I wandered lonely as a cloud.', poet: 'Wordsworth' },
+    { line: 'Earth has not anything to show more fair.', poet: 'Wordsworth' },
+    { line: 'My heart leaps up when I behold a rainbow in the sky.', poet: 'Wordsworth' },
+    { line: 'Bright star, would I were stedfast as thou art.', poet: 'Keats' },
+    { line: 'Season of mists and mellow fruitfulness.', poet: 'Keats, “To Autumn”' },
+    { line: 'Beauty is truth, truth beauty.', poet: 'Keats' },
+    { line: 'Hope is the thing with feathers.', poet: 'Emily Dickinson' },
+    { line: 'Tell all the truth but tell it slant.', poet: 'Emily Dickinson' },
+    { line: 'The mountains look on Marathon.', poet: 'Byron' },
+    { line: 'She walks in beauty, like the night.', poet: 'Byron' },
+    { line: 'Tyger Tyger, burning bright.', poet: 'Blake' },
+    { line: 'To see a World in a Grain of Sand.', poet: 'Blake' },
+    { line: 'In Xanadu did Kubla Khan a stately pleasure-dome decree.', poet: 'Coleridge' },
+    { line: 'Look on my works, ye Mighty, and despair!', poet: 'Shelley, “Ozymandias”' },
+    { line: 'Shall I compare thee to a summer’s day?', poet: 'Shakespeare' },
+    { line: 'Once more unto the breach, dear friends.', poet: 'Shakespeare, “Henry V”' },
+    { line: 'How do I love thee? Let me count the ways.', poet: 'E. B. Browning' },
+    { line: 'Tread softly because you tread on my dreams.', poet: 'W. B. Yeats' },
+    { line: 'They also serve who only stand and wait.', poet: 'Milton' },
+    { line: 'Ring out, wild bells, to the wild sky.', poet: 'Tennyson' },
+    { line: 'The hills are shadows, and they flow from form to form.', poet: 'Tennyson' },
+    { line: 'And the highlands and the islands are calling me away.', poet: 'Anon. (trad.)' },
+  ];
+
+  function setDailyPoem() {
+    const el = document.getElementById('header-quote');
+    if (!el) return;
+    const now = new Date();
+    const start = new Date(now.getFullYear(), 0, 0);
+    const dayOfYear = Math.floor((now - start) / 86400000);
+    const pick = POEM_LINES[dayOfYear % POEM_LINES.length];
+    el.innerHTML = '“' + pick.line + '”<span class="attr">— ' + pick.poet + '</span>';
+  }
 
   const SECTION_ORDER = [
     'Thursday 4 June',
@@ -994,6 +1059,7 @@
     });
   })();
 
+  setDailyPoem();
   updateClock();
   setInterval(updateClock, 1000);
 </script>
