@@ -82,6 +82,19 @@
       text-transform: uppercase;
     }
 
+    .today-badge {
+      display: inline-block;
+      background: #b07050;
+      color: #f5f2ed;
+      font-size: 9px;
+      letter-spacing: 0.12em;
+      padding: 2px 7px;
+      border-radius: 10px;
+      margin-left: 8px;
+      vertical-align: middle;
+      font-weight: 400;
+    }
+
     #past-days { margin-bottom: 6px; }
     #past-days-header {
       font-size: 9px;
@@ -858,17 +871,22 @@
   const today = new Date();
   today.setHours(0,0,0,0);
 
-  // Dynamically mark the section matching today's actual date with "— Today".
+  // Dynamically mark the section matching today's actual date with a "TODAY" badge.
   // This keeps the marker correct no matter the real date, avoiding stale labels.
   (function markToday() {
     document.querySelectorAll('.section-label').forEach(label => {
-      // Strip any pre-existing "— Today" (but leave descriptors like "— We Society")
-      label.textContent = label.textContent.replace(/\s*—\s*Today\s*$/, '');
+      // Remove any existing badge or legacy "— Today" text
+      const oldBadge = label.querySelector('.today-badge');
+      if (oldBadge) oldBadge.remove();
+      label.innerHTML = label.innerHTML.replace(/\s*—\s*Today\s*$/, '');
       for (const [key, date] of Object.entries(sectionDates)) {
         if (label.textContent.includes(key)) {
           const d = new Date(date); d.setHours(0,0,0,0);
           if (d.getTime() === today.getTime()) {
-            label.textContent = label.textContent + ' — Today';
+            const badge = document.createElement('span');
+            badge.className = 'today-badge';
+            badge.textContent = 'TODAY';
+            label.appendChild(badge);
           }
           break;
         }
