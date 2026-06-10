@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #eeeae3;
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 40px 20px;
+      font-family: 'DM Mono', monospace;
+    }
+
+    .planner {
+      background: #f5f2ed;
+      border-radius: 14px;
+      padding: 32px 32px 36px;
+      color: #3a3530;
+      width: 100%;
+      max-width: 560px;
+      box-shadow: 0 4px 32px rgba(0,0,0,0.08);
+    }
+
+    .top {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      margin-bottom: 24px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid #ddd8d0;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .title-block .label {
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      color: #a09888;
+      margin-bottom: 4px;
+    }
+
+    .title-block .name {
+      font-family: 'DM Serif Display', serif;
+      font-size: 28px;
+      color: #3a3530;
+      line-height: 1;
+    }
+
+    .title-block .name em { font-style: italic; color: #8c7b6b; }
+
+    .clock-block { text-align: right; }
+
+    .clock-display {
+      font-family: 'DM Mono', monospace;
+      font-size: 32px;
+      font-weight: 300;
+      color: #3a3530;
+      letter-spacing: 0.04em;
+      line-height: 1;
+    }
+
+    .clock-date {
+      font-size: 10px;
+      color: #a09888;
+      letter-spacing: 0.1em;
+      margin-top: 4px;
+    }
+
+    .nav-link {
+      display: inline-block;
+      margin-bottom: 18px;
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      color: #8c7b6b;
+      text-decoration: none;
+      border: 1px solid #ddd8d0;
+      border-radius: 20px;
+      padding: 4px 12px;
+      transition: all 0.2s;
+    }
+    .nav-link:hover { background: #8c7b6b; color: #f5f2ed; border-color: #8c7b6b; }
+
+    .section-label {
+      font-size: 9px;
+      letter-spacing: 0.16em;
+      color: #b0a898;
+      margin: 18px 0 8px;
+      text-transform: uppercase;
+    }
+
+    .task-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 9px 0;
+      border-bottom: 1px solid #ede8e0;
+      cursor: pointer;
+    }
+
+    .task-row:last-of-type { border-bottom: none; }
+    .task-row:hover .task-text { color: #6b5c4e; }
+
+    .tick {
+      width: 15px;
+      height: 15px;
+      border: 1px solid #c5bdb3;
+      border-radius: 50%;
+      flex-shrink: 0;
+      margin-top: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .tick.done { background: #8c7b6b; border-color: #8c7b6b; }
+    .tick.done::after {
+      content: '';
+      width: 7px;
+      height: 4px;
+      border-left: 1.5px solid #f5f2ed;
+      border-bottom: 1.5px solid #f5f2ed;
+      transform: rotate(-45deg) translateY(-1px);
+      display: block;
+    }
+
+    .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      margin-top: 5px;
+    }
+
+    .dot-home    { background: #8c7b6b; }
+    .dot-health  { background: #5a8a6a; }
+    .dot-social  { background: #7b6ea8; }
+    .dot-writing { background: #b07050; }
+    .dot-finance { background: #5e88a8; }
+    .dot-hobbies { background: #c89070; }
+
+    .task-body { flex: 1; }
+
+    .task-text {
+      font-size: 12px;
+      color: #3a3530;
+      line-height: 1.5;
+      transition: color 0.15s;
+    }
+
+    .task-text.done-text { text-decoration: line-through; color: #c5bdb3; }
+
+    .task-sub {
+      font-size: 10px;
+      color: #b0a898;
+      margin-top: 2px;
+      line-height: 1.4;
+    }
+
+    .footer {
+      margin-top: 22px;
+      padding-top: 16px;
+      border-top: 1px solid #ddd8d0;
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 9px;
+      color: #b0a898;
+      letter-spacing: 0.08em;
+    }
+
+    .legend-dot { width: 6px; height: 6px; border-radius: 50%; }
+  </style>
+</head>
+<body>
+<div class="planner">
+
+  <div class="top">
+    <div class="title-block">
+      <div class="label">LIFE PLANNER</div>
+      <div class="name">Emi's <em>Life</em> Planner</div>
+    </div>
+    <div class="clock-block">
+      <div class="clock-display" id="clock">--:--:--</div>
+      <div class="clock-date" id="dateline">---</div>
+    </div>
+  </div>
+
+  <a class="nav-link" href="index.html">→ Work planner</a>
+
+  <div class="section-label">Home &amp; errands</div>
+  <div class="task-row" onclick="tick(this)"><div class="tick"></div><div class="dot dot-home"></div><div class="task-body"><div class="task-text">Weekly grocery shop</div></div></div>
+  <div class="task-row" onclick="tick(this)"><div class="tick"></div><div class="dot dot-home"></div><div class="task-body"><div class="task-text">Tidy &amp; laundry</div></div></div>
+
+  <div class="section-label">Health &amp; wellbeing</div>
+  <div class="task-row" onclick="tick(this)"><div class="tick"></div><div class="dot dot-health"></div><div class="task-body"><div class="task-text">Reformer pilates</div></div></div>
+  <div class="task-row" onclick="tick(this)"><div class="tick"></div><div class="dot dot-health"></div><div class="task-body"><div class="task-text">Book dentist appointment</div></div></div>
+
+  <div class="section-label">Social &amp; relationships</div>
+  <div class="task-row" onclick="tick(this)"><div class="tick"></div><div class="dot dot-social"></div><div class="task-body"><div class="task-text">Catch up with friends</div></div></div>
+
+  <div class="section-label">Personal writing / Arvon</div>
+  <div class="task-row" onclick="tick(this)"><div class="tick"></div><div class="dot dot-writing"></div><div class="task-body"><div class="task-text">Work on novel</div><div class="task-sub">Arvon programme</div></div></div>
+
+  <div class="section-label">Finance &amp; admin</div>
+  <div class="task-row" onclick="tick(this)"><div class="tick"></div><div class="dot dot-finance"></div><div class="task-body"><div class="task-text">Review monthly budget</div></div></div>
+
+  <div class="section-label">Hobbies &amp; fun</div>
+  <div class="task-row" onclick="tick(this)"><div class="tick"></div><div class="dot dot-hobbies"></div><div class="task-body"><div class="task-text">Plan next mountaineering trip</div></div></div>
+
+  <div class="footer">
+    <div class="legend-item"><div class="legend-dot" style="background:#8c7b6b"></div>home</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#5a8a6a"></div>health</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#7b6ea8"></div>social</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#b07050"></div>writing</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#5e88a8"></div>finance</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#c89070"></div>hobbies</div>
+  </div>
+
+</div>
+
+<script>
+  const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+  function updateClock() {
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2,'0');
+    const m = String(now.getMinutes()).padStart(2,'0');
+    const s = String(now.getSeconds()).padStart(2,'0');
+    document.getElementById('clock').textContent = h + ':' + m + ':' + s;
+    document.getElementById('dateline').textContent = DAYS[now.getDay()] + ' ' + now.getDate() + ' ' + MONTHS[now.getMonth()];
+  }
+
+  // Separate storage key so the life planner never clashes with the work planner
+  function getSavedTicks() {
+    try { return JSON.parse(localStorage.getItem('emi-life-planner-ticks') || '{}'); } catch { return {}; }
+  }
+  function saveTicks(ticks) {
+    localStorage.setItem('emi-life-planner-ticks', JSON.stringify(ticks));
+  }
+
+  function tick(row) {
+    const t = row.querySelector('.tick');
+    const txt = row.querySelector('.task-text');
+    t.classList.toggle('done');
+    txt.classList.toggle('done-text');
+    const ticks = getSavedTicks();
+    ticks[row.dataset.id] = t.classList.contains('done');
+    saveTicks(ticks);
+  }
+
+  // Assign stable IDs based on task text content
+  document.querySelectorAll('.task-row').forEach(row => {
+    const txt = row.querySelector('.task-text');
+    if (txt) row.dataset.id = 'life-' + txt.textContent.trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').substring(0,40);
+  });
+
+  const saved = getSavedTicks();
+  document.querySelectorAll('.task-row').forEach(row => {
+    if (saved[row.dataset.id]) {
+      row.querySelector('.tick').classList.add('done');
+      row.querySelector('.task-text').classList.add('done-text');
+    }
+  });
+
+  updateClock();
+  setInterval(updateClock, 1000);
+</script>
+</body>
+</html>
