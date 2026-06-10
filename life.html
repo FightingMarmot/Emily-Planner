@@ -366,6 +366,16 @@
     <span class="move-arrows"><span class="up-arrow" onclick="moveTask(event, this, -1)" title="Move to previous day">↑</span><span class="down-arrow" onclick="moveTask(event, this, 1)" title="Move to next day">↓</span></span>
   </div>
 
+  <div class="section-label">Friday 31 July – Sunday 2 August</div>
+
+  <div class="task-row" onclick="tick(this)">
+    <div class="tick"></div><div class="dot dot-hobbies"></div>
+    <span class="task-time">All days</span>
+    <div class="task-body"><div class="task-text">Ball Together Now festival</div><div class="task-sub">Manchester · 31 Jul – 2 Aug</div></div>
+  
+    <span class="move-arrows"><span class="up-arrow" onclick="moveTask(event, this, -1)" title="Move to previous day">↑</span><span class="down-arrow" onclick="moveTask(event, this, 1)" title="Move to next day">↓</span></span>
+  </div>
+
   <div class="footer">
     <div class="legend-item"><div class="legend-dot" style="background:#8c7b6b"></div>home</div>
     <div class="legend-item"><div class="legend-dot" style="background:#5a8a6a"></div>health</div>
@@ -388,7 +398,8 @@
     'Saturday 13 June',
     'Sunday 14 June',
     'Monday 15 June',
-    'Tuesday 16 June'
+    'Tuesday 16 June',
+    'Friday 31 July – Sunday 2 August'
   ];
 
   async function moveTask(e, arrow, dir) {
@@ -579,6 +590,7 @@
     'Sunday 14 June':    new Date('2026-06-14'),
     'Monday 15 June':    new Date('2026-06-15'),
     'Tuesday 16 June':   new Date('2026-06-16'),
+    'Friday 31 July – Sunday 2 August': new Date('2026-07-31'),
   };
 
   const today = new Date();
