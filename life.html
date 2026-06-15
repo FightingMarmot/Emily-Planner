@@ -695,22 +695,24 @@
     e.stopPropagation();
     const row = arrow.closest('.task-row');
     let section = row.previousElementSibling;
-    while (section && !section.classList.contains('section-label')) {
+    while (section && !section.classList.contains('section-header')) {
       section = section.previousElementSibling;
     }
     if (!section) return;
 
-    const currentText = section.textContent.trim();
+    const currentText = section.querySelector('.section-label').textContent.trim();
     const currentIdx = SECTION_ORDER.findIndex(s => currentText.includes(s));
     if (currentIdx === -1) return;
     const targetIdx = currentIdx + dir;
     if (targetIdx < 0 || targetIdx >= SECTION_ORDER.length) return;
 
     const targetSectionText = SECTION_ORDER[targetIdx];
-    const allSections = document.querySelectorAll('.section-label');
+    const allSections = document.querySelectorAll('.section-header');
     let targetSection = null;
-    allSections.forEach(s => { if (s.textContent.includes(targetSectionText)) targetSection = s; });
+    allSections.forEach(s => { const lbl = s.querySelector('.section-label'); if (lbl && lbl.textContent.includes(targetSectionText)) targetSection = s; });
     if (!targetSection) return;
+    let insertAfter = targetSection;
+    if (insertAfter.nextElementSibling && insertAfter.nextElementSibling.classList.contains('add-task-form')) insertAfter = insertAfter.nextElementSibling;
 
     const originalId = row.dataset.id;
     const taskHTML = row.querySelector('.task-text').innerHTML;
@@ -732,7 +734,7 @@
     clone.querySelector('.tick').classList.remove('done');
     clone.querySelector('.task-text').classList.remove('done-text');
     clone.style.opacity = '0';
-    targetSection.insertAdjacentElement('afterend', clone);
+    insertAfter.insertAdjacentElement('afterend', clone);
     setTimeout(() => { clone.style.transition = 'opacity 0.3s'; clone.style.opacity = '1'; }, 50);
 
     row.style.transition = 'opacity 0.3s';
@@ -751,9 +753,9 @@
         // entirely so it can't spawn an orphan duplicate.
         if (!orig) return;
 
-        var allSections = document.querySelectorAll('.section-label');
+        var allSections = document.querySelectorAll('.section-header');
         var targetSection = null;
-        allSections.forEach(function(s) { if (s.textContent.includes(move.targetSection)) targetSection = s; });
+        allSections.forEach(function(s) { var lbl = s.querySelector('.section-label'); if (lbl && lbl.textContent.includes(move.targetSection)) targetSection = s; });
 
         // If we can't place the moved task, skip this move entirely and drop it (don't hide the original)
         if (!targetSection) return;
@@ -796,7 +798,9 @@
         newRow.appendChild(body);
         newRow.appendChild(arrows);
 
-        targetSection.insertAdjacentElement('afterend', newRow);
+        var insertAfter = targetSection;
+        if (insertAfter.nextElementSibling && insertAfter.nextElementSibling.classList.contains('add-task-form')) insertAfter = insertAfter.nextElementSibling;
+        insertAfter.insertAdjacentElement('afterend', newRow);
 
         // Only now that the clone is safely placed, hide the original
         if (orig) orig.style.display = 'none';
@@ -1045,13 +1049,15 @@
     });
   })();
 
-  document.querySelectorAll('.section-label').forEach(label => {
+  document.querySelectorAll('.section-header').forEach(header => {
+    const label = header.querySelector('.section-label');
+    if (!label) return;
     const text = label.textContent;
     for (const [key, date] of Object.entries(sectionDates)) {
       if (text.includes(key) && date < today) {
-        label.style.opacity = '0.4';
-        let el = label.nextElementSibling;
-        while (el && !el.classList.contains('section-label')) {
+        header.style.opacity = '0.4';
+        let el = header.nextElementSibling;
+        while (el && !el.classList.contains('section-header')) {
           el.style.opacity = '0.4';
           el = el.nextElementSibling;
         }
@@ -1073,9 +1079,11 @@
     body.style.display = 'none';
 
     // Gather and move each old section (its label + its task rows) into the archive
-    const labels = Array.from(planner.querySelectorAll('.section-label'));
+    const headers = Array.from(planner.querySelectorAll('.section-header'));
     let movedCount = 0;
-    labels.forEach(label => {
+    headers.forEach(header => {
+      const label = header.querySelector('.section-label');
+      if (!label) return;
       let secDate = null;
       for (const [key, date] of Object.entries(sectionDates)) {
         if (label.textContent.includes(key)) { secDate = date; break; }
@@ -1083,9 +1091,9 @@
       if (!secDate) return;
       const d = new Date(secDate); d.setHours(0,0,0,0);
       if (d <= cutoff) {
-        const group = [label];
-        let el = label.nextElementSibling;
-        while (el && !el.classList.contains('section-label')) {
+        const group = [header];
+        let el = header.nextElementSibling;
+        while (el && !el.classList.contains('section-header')) {
           const next = el.nextElementSibling;
           group.push(el);
           el = next;
@@ -1115,7 +1123,7 @@
     updateHeader();
 
     // Place the archive just above the first remaining (current) day
-    const firstRemaining = planner.querySelector('.section-label');
+    const firstRemaining = planner.querySelector('.section-header');
     if (firstRemaining) {
       planner.insertBefore(wrap, firstRemaining);
     } else {
