@@ -96,6 +96,102 @@
       font-weight: 400;
     }
 
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 18px 0 8px;
+    }
+    .section-header .section-label {
+      margin: 0;
+    }
+    .add-task-btn {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 1px solid #c5bdb3;
+      background: none;
+      color: #b0a898;
+      font-size: 14px;
+      line-height: 1;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      flex-shrink: 0;
+      padding: 0;
+      font-family: 'DM Mono', monospace;
+    }
+    .add-task-btn:hover { background: #8c7b6b; border-color: #8c7b6b; color: #f5f2ed; }
+
+    .add-task-form {
+      background: #f0ece6;
+      border-radius: 8px;
+      padding: 12px 14px;
+      margin: 6px 0 10px;
+      display: none;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .add-task-form.open { display: flex; }
+    .add-task-form input[type="text"],
+    .add-task-form input[type="time"] {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      border: 1px solid #ddd8d0;
+      border-radius: 6px;
+      padding: 6px 10px;
+      background: #f5f2ed;
+      color: #3a3530;
+      outline: none;
+      width: 100%;
+    }
+    .add-task-form input[type="text"]:focus,
+    .add-task-form input[type="time"]:focus {
+      border-color: #8c7b6b;
+    }
+    .add-task-form-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .colour-picker {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .colour-swatch {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: border-color 0.15s;
+      flex-shrink: 0;
+    }
+    .colour-swatch.selected { border-color: #3a3530; }
+    .add-task-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+    .add-task-save, .add-task-cancel {
+      font-family: 'DM Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      border-radius: 20px;
+      padding: 4px 12px;
+      cursor: pointer;
+      border: 1px solid;
+    }
+    .add-task-save { background: #8c7b6b; color: #f5f2ed; border-color: #8c7b6b; }
+    .add-task-save:hover { background: #7a6a5a; }
+    .add-task-cancel { background: none; color: #b0a898; border-color: #ddd8d0; }
+    .add-task-cancel:hover { color: #8c7b6b; border-color: #c5bdb3; }
+
     #past-days { margin-bottom: 6px; }
     #past-days-header {
       font-size: 9px;
@@ -298,7 +394,21 @@
 
   <a href="life.html" style="display:inline-block;margin-bottom:18px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.1em;color:#8c7b6b;text-decoration:none;border:1px solid #ddd8d0;border-radius:20px;padding:4px 12px;">→ Life planner</a>
 
+  <div class="section-header">
   <div class="section-label">Thursday 4 June</div>
+  <button class="add-task-btn" onclick="toggleAddForm('thursday-4-june')" title="Add task">+</button>
+</div>
+<div class="add-task-form" id="form-thursday-4-june">
+  <input type="text" id="text-thursday-4-june" placeholder="Task description…" />
+  <div class="add-task-form-row">
+    <input type="time" id="time-thursday-4-june" style="width:120px;flex-shrink:0;" />
+    <div class="colour-picker" id="colours-thursday-4-june"></div>
+  </div>
+  <div class="add-task-actions">
+    <button class="add-task-cancel" onclick="toggleAddForm('thursday-4-june')">Cancel</button>
+    <button class="add-task-save" onclick="saveTask('thursday-4-june')">Add</button>
+  </div>
+</div>
 
   <div class="task-row" onclick="tick(this)">
     <div class="tick"></div><div class="dot dot-urgent"></div>
@@ -349,7 +459,21 @@
   
     <span class="move-arrows"><span class="up-arrow" onclick="moveTask(event, this, -1)" title="Move to previous day">↑</span><span class="down-arrow" onclick="moveTask(event, this, 1)" title="Move to next day">↓</span></span>
   </div>
+  <div class="section-header">
   <div class="section-label">Friday 5 June</div>
+  <button class="add-task-btn" onclick="toggleAddForm('friday-5-june')" title="Add task">+</button>
+</div>
+<div class="add-task-form" id="form-friday-5-june">
+  <input type="text" id="text-friday-5-june" placeholder="Task description…" />
+  <div class="add-task-form-row">
+    <input type="time" id="time-friday-5-june" style="width:120px;flex-shrink:0;" />
+    <div class="colour-picker" id="colours-friday-5-june"></div>
+  </div>
+  <div class="add-task-actions">
+    <button class="add-task-cancel" onclick="toggleAddForm('friday-5-june')">Cancel</button>
+    <button class="add-task-save" onclick="saveTask('friday-5-june')">Add</button>
+  </div>
+</div>
 
   <div class="task-row" onclick="tick(this)">
     <div class="tick"></div><div class="dot dot-fixed"></div>
@@ -371,7 +495,21 @@
   
     <span class="move-arrows"><span class="up-arrow" onclick="moveTask(event, this, -1)" title="Move to previous day">↑</span><span class="down-arrow" onclick="moveTask(event, this, 1)" title="Move to next day">↓</span></span>
   </div>
+  <div class="section-header">
   <div class="section-label">Monday 8 June</div>
+  <button class="add-task-btn" onclick="toggleAddForm('monday-8-june')" title="Add task">+</button>
+</div>
+<div class="add-task-form" id="form-monday-8-june">
+  <input type="text" id="text-monday-8-june" placeholder="Task description…" />
+  <div class="add-task-form-row">
+    <input type="time" id="time-monday-8-june" style="width:120px;flex-shrink:0;" />
+    <div class="colour-picker" id="colours-monday-8-june"></div>
+  </div>
+  <div class="add-task-actions">
+    <button class="add-task-cancel" onclick="toggleAddForm('monday-8-june')">Cancel</button>
+    <button class="add-task-save" onclick="saveTask('monday-8-june')">Add</button>
+  </div>
+</div>
 
   <div class="task-row" onclick="tick(this)">
     <div class="tick"></div><div class="dot dot-we"></div>
@@ -434,7 +572,21 @@
   
     <span class="move-arrows"><span class="up-arrow" onclick="moveTask(event, this, -1)" title="Move to previous day">↑</span><span class="down-arrow" onclick="moveTask(event, this, 1)" title="Move to next day">↓</span></span>
   </div>
+  <div class="section-header">
   <div class="section-label">Tuesday 9 June</div>
+  <button class="add-task-btn" onclick="toggleAddForm('tuesday-9-june')" title="Add task">+</button>
+</div>
+<div class="add-task-form" id="form-tuesday-9-june">
+  <input type="text" id="text-tuesday-9-june" placeholder="Task description…" />
+  <div class="add-task-form-row">
+    <input type="time" id="time-tuesday-9-june" style="width:120px;flex-shrink:0;" />
+    <div class="colour-picker" id="colours-tuesday-9-june"></div>
+  </div>
+  <div class="add-task-actions">
+    <button class="add-task-cancel" onclick="toggleAddForm('tuesday-9-june')">Cancel</button>
+    <button class="add-task-save" onclick="saveTask('tuesday-9-june')">Add</button>
+  </div>
+</div>
 
   <div class="task-row" onclick="tick(this)">
     <div class="tick"></div><div class="dot dot-fixed"></div>
@@ -463,7 +615,21 @@
   
     <span class="move-arrows"><span class="up-arrow" onclick="moveTask(event, this, -1)" title="Move to previous day">↑</span><span class="down-arrow" onclick="moveTask(event, this, 1)" title="Move to next day">↓</span></span>
   </div>
+  <div class="section-header">
   <div class="section-label">Wednesday 10 June</div>
+  <button class="add-task-btn" onclick="toggleAddForm('wednesday-10-june')" title="Add task">+</button>
+</div>
+<div class="add-task-form" id="form-wednesday-10-june">
+  <input type="text" id="text-wednesday-10-june" placeholder="Task description…" />
+  <div class="add-task-form-row">
+    <input type="time" id="time-wednesday-10-june" style="width:120px;flex-shrink:0;" />
+    <div class="colour-picker" id="colours-wednesday-10-june"></div>
+  </div>
+  <div class="add-task-actions">
+    <button class="add-task-cancel" onclick="toggleAddForm('wednesday-10-june')">Cancel</button>
+    <button class="add-task-save" onclick="saveTask('wednesday-10-june')">Add</button>
+  </div>
+</div>
 
   <div class="task-row" onclick="tick(this)">
     <div class="tick"></div><div class="dot dot-wym"></div>
@@ -502,7 +668,21 @@
   
     <span class="move-arrows"><span class="up-arrow" onclick="moveTask(event, this, -1)" title="Move to previous day">↑</span><span class="down-arrow" onclick="moveTask(event, this, 1)" title="Move to next day">↓</span></span>
   </div>
+  <div class="section-header">
   <div class="section-label">Thursday 11 June</div>
+  <button class="add-task-btn" onclick="toggleAddForm('thursday-11-june')" title="Add task">+</button>
+</div>
+<div class="add-task-form" id="form-thursday-11-june">
+  <input type="text" id="text-thursday-11-june" placeholder="Task description…" />
+  <div class="add-task-form-row">
+    <input type="time" id="time-thursday-11-june" style="width:120px;flex-shrink:0;" />
+    <div class="colour-picker" id="colours-thursday-11-june"></div>
+  </div>
+  <div class="add-task-actions">
+    <button class="add-task-cancel" onclick="toggleAddForm('thursday-11-june')">Cancel</button>
+    <button class="add-task-save" onclick="saveTask('thursday-11-june')">Add</button>
+  </div>
+</div>
 
   <div class="task-row" onclick="tick(this)">
     <div class="tick"></div><div class="dot dot-fixed"></div>
@@ -514,7 +694,21 @@
   
     <span class="move-arrows"><span class="up-arrow" onclick="moveTask(event, this, -1)" title="Move to previous day">↑</span><span class="down-arrow" onclick="moveTask(event, this, 1)" title="Move to next day">↓</span></span>
   </div>
+  <div class="section-header">
   <div class="section-label">Friday–Saturday 12–13 June</div>
+  <button class="add-task-btn" onclick="toggleAddForm('friday-saturday-12-13-june')" title="Add task">+</button>
+</div>
+<div class="add-task-form" id="form-friday-saturday-12-13-june">
+  <input type="text" id="text-friday-saturday-12-13-june" placeholder="Task description…" />
+  <div class="add-task-form-row">
+    <input type="time" id="time-friday-saturday-12-13-june" style="width:120px;flex-shrink:0;" />
+    <div class="colour-picker" id="colours-friday-saturday-12-13-june"></div>
+  </div>
+  <div class="add-task-actions">
+    <button class="add-task-cancel" onclick="toggleAddForm('friday-saturday-12-13-june')">Cancel</button>
+    <button class="add-task-save" onclick="saveTask('friday-saturday-12-13-june')">Add</button>
+  </div>
+</div>
 
   <div class="task-row" onclick="tick(this)">
     <div class="tick"></div><div class="dot dot-prep"></div>
@@ -557,7 +751,21 @@
   
     <span class="move-arrows"><span class="up-arrow" onclick="moveTask(event, this, -1)" title="Move to previous day">↑</span><span class="down-arrow" onclick="moveTask(event, this, 1)" title="Move to next day">↓</span></span>
   </div>
+  <div class="section-header">
   <div class="section-label">Monday 15 June</div>
+  <button class="add-task-btn" onclick="toggleAddForm('monday-15-june')" title="Add task">+</button>
+</div>
+<div class="add-task-form" id="form-monday-15-june">
+  <input type="text" id="text-monday-15-june" placeholder="Task description…" />
+  <div class="add-task-form-row">
+    <input type="time" id="time-monday-15-june" style="width:120px;flex-shrink:0;" />
+    <div class="colour-picker" id="colours-monday-15-june"></div>
+  </div>
+  <div class="add-task-actions">
+    <button class="add-task-cancel" onclick="toggleAddForm('monday-15-june')">Cancel</button>
+    <button class="add-task-save" onclick="saveTask('monday-15-june')">Add</button>
+  </div>
+</div>
 
   <div class="task-row" onclick="tick(this)">
     <div class="tick"></div><div class="dot dot-prep"></div>
@@ -580,7 +788,21 @@
   
     <span class="move-arrows"><span class="up-arrow" onclick="moveTask(event, this, -1)" title="Move to previous day">↑</span><span class="down-arrow" onclick="moveTask(event, this, 1)" title="Move to next day">↓</span></span>
   </div>
+  <div class="section-header">
   <div class="section-label">Tuesday 16 June — We Society</div>
+  <button class="add-task-btn" onclick="toggleAddForm('tuesday-16-june---we-society')" title="Add task">+</button>
+</div>
+<div class="add-task-form" id="form-tuesday-16-june---we-society">
+  <input type="text" id="text-tuesday-16-june---we-society" placeholder="Task description…" />
+  <div class="add-task-form-row">
+    <input type="time" id="time-tuesday-16-june---we-society" style="width:120px;flex-shrink:0;" />
+    <div class="colour-picker" id="colours-tuesday-16-june---we-society"></div>
+  </div>
+  <div class="add-task-actions">
+    <button class="add-task-cancel" onclick="toggleAddForm('tuesday-16-june---we-society')">Cancel</button>
+    <button class="add-task-save" onclick="saveTask('tuesday-16-june---we-society')">Add</button>
+  </div>
+</div>
 
   <div class="task-row" onclick="tick(this)">
     <div class="tick"></div><div class="dot dot-we"></div>
@@ -602,7 +824,21 @@
   
     <span class="move-arrows"><span class="up-arrow" onclick="moveTask(event, this, -1)" title="Move to previous day">↑</span><span class="down-arrow" onclick="moveTask(event, this, 1)" title="Move to next day">↓</span></span>
   </div>
+  <div class="section-header">
   <div class="section-label">Friday 19 June</div>
+  <button class="add-task-btn" onclick="toggleAddForm('friday-19-june')" title="Add task">+</button>
+</div>
+<div class="add-task-form" id="form-friday-19-june">
+  <input type="text" id="text-friday-19-june" placeholder="Task description…" />
+  <div class="add-task-form-row">
+    <input type="time" id="time-friday-19-june" style="width:120px;flex-shrink:0;" />
+    <div class="colour-picker" id="colours-friday-19-june"></div>
+  </div>
+  <div class="add-task-actions">
+    <button class="add-task-cancel" onclick="toggleAddForm('friday-19-june')">Cancel</button>
+    <button class="add-task-save" onclick="saveTask('friday-19-june')">Add</button>
+  </div>
+</div>
 
   <div class="task-row" onclick="tick(this)">
     <div class="tick"></div><div class="dot dot-fixed"></div>
@@ -611,7 +847,21 @@
   
     <span class="move-arrows"><span class="up-arrow" onclick="moveTask(event, this, -1)" title="Move to previous day">↑</span><span class="down-arrow" onclick="moveTask(event, this, 1)" title="Move to next day">↓</span></span>
   </div>
+  <div class="section-header">
   <div class="section-label">Monday 22 June</div>
+  <button class="add-task-btn" onclick="toggleAddForm('monday-22-june')" title="Add task">+</button>
+</div>
+<div class="add-task-form" id="form-monday-22-june">
+  <input type="text" id="text-monday-22-june" placeholder="Task description…" />
+  <div class="add-task-form-row">
+    <input type="time" id="time-monday-22-june" style="width:120px;flex-shrink:0;" />
+    <div class="colour-picker" id="colours-monday-22-june"></div>
+  </div>
+  <div class="add-task-actions">
+    <button class="add-task-cancel" onclick="toggleAddForm('monday-22-june')">Cancel</button>
+    <button class="add-task-save" onclick="saveTask('monday-22-june')">Add</button>
+  </div>
+</div>
 
   <div class="task-row" onclick="tick(this)">
     <div class="tick"></div><div class="dot dot-prep"></div>
@@ -623,7 +873,21 @@
   
     <span class="move-arrows"><span class="up-arrow" onclick="moveTask(event, this, -1)" title="Move to previous day">↑</span><span class="down-arrow" onclick="moveTask(event, this, 1)" title="Move to next day">↓</span></span>
   </div>
+  <div class="section-header">
   <div class="section-label">Tuesday 23 June</div>
+  <button class="add-task-btn" onclick="toggleAddForm('tuesday-23-june')" title="Add task">+</button>
+</div>
+<div class="add-task-form" id="form-tuesday-23-june">
+  <input type="text" id="text-tuesday-23-june" placeholder="Task description…" />
+  <div class="add-task-form-row">
+    <input type="time" id="time-tuesday-23-june" style="width:120px;flex-shrink:0;" />
+    <div class="colour-picker" id="colours-tuesday-23-june"></div>
+  </div>
+  <div class="add-task-actions">
+    <button class="add-task-cancel" onclick="toggleAddForm('tuesday-23-june')">Cancel</button>
+    <button class="add-task-save" onclick="saveTask('tuesday-23-june')">Add</button>
+  </div>
+</div>
 
   <div class="task-row" onclick="tick(this)">
     <div class="tick"></div><div class="dot dot-fixed"></div>
@@ -635,7 +899,21 @@
   
     <span class="move-arrows"><span class="up-arrow" onclick="moveTask(event, this, -1)" title="Move to previous day">↑</span><span class="down-arrow" onclick="moveTask(event, this, 1)" title="Move to next day">↓</span></span>
   </div>
+  <div class="section-header">
   <div class="section-label">Wednesday 24 June</div>
+  <button class="add-task-btn" onclick="toggleAddForm('wednesday-24-june')" title="Add task">+</button>
+</div>
+<div class="add-task-form" id="form-wednesday-24-june">
+  <input type="text" id="text-wednesday-24-june" placeholder="Task description…" />
+  <div class="add-task-form-row">
+    <input type="time" id="time-wednesday-24-june" style="width:120px;flex-shrink:0;" />
+    <div class="colour-picker" id="colours-wednesday-24-june"></div>
+  </div>
+  <div class="add-task-actions">
+    <button class="add-task-cancel" onclick="toggleAddForm('wednesday-24-june')">Cancel</button>
+    <button class="add-task-save" onclick="saveTask('wednesday-24-june')">Add</button>
+  </div>
+</div>
 
   <div class="task-row" onclick="tick(this)">
     <div class="tick"></div><div class="dot dot-fixed"></div>
@@ -800,6 +1078,154 @@
 
       // Persist only the moves we could successfully apply (clears stale ones)
       localStorage.setItem('emi-planner-moves', JSON.stringify(validMoves));
+    } catch(e) {}
+  }
+
+
+  // Work planner colour swatches
+  const WORK_COLOURS = [
+    { cls: 'dot-urgent', hex: '#c89070', label: 'urgent' },
+    { cls: 'dot-fixed',  hex: '#5e88a8', label: 'fixed' },
+    { cls: 'dot-prep',   hex: '#8c7b6b', label: 'prep' },
+    { cls: 'dot-wym',    hex: '#5a8a6a', label: "what's your map" },
+    { cls: 'dot-we',     hex: '#7b6ea8', label: 'we society' },
+  ];
+
+  const selectedColour = {};
+
+  function initColourPickers() {
+    document.querySelectorAll('.colour-picker').forEach(picker => {
+      const sid = picker.id.replace('colours-', '');
+      WORK_COLOURS.forEach((col, i) => {
+        const sw = document.createElement('span');
+        sw.className = 'colour-swatch' + (i === 0 ? ' selected' : '');
+        sw.style.background = col.hex;
+        sw.title = col.label;
+        sw.dataset.cls = col.cls;
+        sw.addEventListener('click', () => {
+          picker.querySelectorAll('.colour-swatch').forEach(s => s.classList.remove('selected'));
+          sw.classList.add('selected');
+          selectedColour[sid] = col.cls;
+        });
+        picker.appendChild(sw);
+        if (i === 0) selectedColour[sid] = col.cls;
+      });
+    });
+  }
+
+  function toggleAddForm(sid) {
+    const form = document.getElementById('form-' + sid);
+    if (!form) return;
+    form.classList.toggle('open');
+    if (form.classList.contains('open')) {
+      document.getElementById('text-' + sid).focus();
+    }
+  }
+
+  function saveTask(sid) {
+    const textEl = document.getElementById('text-' + sid);
+    const timeEl = document.getElementById('time-' + sid);
+    const text = textEl.value.trim();
+    if (!text) return;
+
+    const dot = selectedColour[sid] || 'dot-prep';
+    const timeVal = timeEl.value;
+    let timeDisplay = '';
+    let timeClass = '';
+    if (timeVal) {
+      const [h, m] = timeVal.split(':');
+      const hr = parseInt(h);
+      const ampm = hr >= 12 ? 'pm' : 'am';
+      const hr12 = hr % 12 || 12;
+      timeDisplay = hr12 + ':' + m + ' ' + ampm;
+      if (dot === 'dot-urgent') timeClass = 'urgent';
+      else if (dot === 'dot-fixed') timeClass = 'blue';
+      else if (dot === 'dot-wym') timeClass = 'wym';
+      else if (dot === 'dot-we') timeClass = 'purple';
+    }
+
+    // Build new task row
+    const row = document.createElement('div');
+    row.className = 'task-row';
+    row.setAttribute('onclick', 'tick(this)');
+    row.innerHTML =
+      '<div class="tick"></div>' +
+      '<div class="dot ' + dot + '"></div>' +
+      (timeDisplay ? '<span class="task-time ' + timeClass + '">' + timeDisplay + '</span>' : '') +
+      '<div class="task-body"><div class="task-text">' + text + '</div></div>' +
+      '<span class="move-arrows">' +
+        '<span class="up-arrow" onclick="moveTask(event,this,-1)" title="Move to previous day">↑</span>' +
+        '<span class="down-arrow" onclick="moveTask(event,this,1)" title="Move to next day">↓</span>' +
+      '</span>';
+
+    // Assign stable ID
+    row.dataset.id = 'user-task-' + Date.now();
+
+    // Insert before the form's parent section-header's next sibling (the form div), after any existing rows
+    const form = document.getElementById('form-' + sid);
+    form.parentNode.insertBefore(row, form);
+
+    // Persist in storage
+    persistUserTasks();
+
+    // Reset form
+    textEl.value = '';
+    timeEl.value = '';
+    form.classList.remove('open');
+  }
+
+  // Persist all user-added tasks (those with id starting 'user-task-') to localStorage
+  function persistUserTasks() {
+    const tasks = [];
+    document.querySelectorAll('.task-row[data-id^="user-task-"]').forEach(row => {
+      // Find which section this row belongs to
+      let el = row.previousElementSibling;
+      let sectionText = '';
+      while (el) {
+        if (el.classList && el.classList.contains('section-header')) {
+          sectionText = el.querySelector('.section-label').textContent.trim();
+          break;
+        }
+        if (el.classList && el.classList.contains('add-task-form')) { el = el.previousElementSibling; continue; }
+        el = el.previousElementSibling;
+      }
+      const dot = row.querySelector('.dot') ? row.querySelector('.dot').className.replace('dot ','') : 'dot-prep';
+      const text = row.querySelector('.task-text') ? row.querySelector('.task-text').innerHTML : '';
+      const time = row.querySelector('.task-time') ? row.querySelector('.task-time').textContent : '';
+      const timeClass = row.querySelector('.task-time') ? (row.querySelector('.task-time').className.replace('task-time','').trim()) : '';
+      tasks.push({ id: row.dataset.id, section: sectionText, dot, text, time, timeClass });
+    });
+    localStorage.setItem('emi-planner-user-tasks', JSON.stringify(tasks));
+  }
+
+  function restoreUserTasks() {
+    try {
+      const tasks = JSON.parse(localStorage.getItem('emi-planner-user-tasks') || '[]');
+      tasks.forEach(t => {
+        const allLabels = document.querySelectorAll('.section-label');
+        let targetSection = null;
+        allLabels.forEach(l => { if (l.textContent.includes(t.section)) targetSection = l.closest('.section-header'); });
+        if (!targetSection) return;
+        const form = targetSection.nextElementSibling;
+        if (!form || !form.classList.contains('add-task-form')) return;
+        // Don't duplicate
+        if (document.querySelector('[data-id="' + t.id + '"]')) return;
+
+        const row = document.createElement('div');
+        row.className = 'task-row';
+        row.setAttribute('onclick', 'tick(this)');
+        row.dataset.id = t.id;
+        row.innerHTML =
+          '<div class="tick"></div>' +
+          '<div class="dot ' + t.dot + '"></div>' +
+          (t.time ? '<span class="task-time ' + t.timeClass + '">' + t.time + '</span>' : '') +
+          '<div class="task-body"><div class="task-text">' + t.text + '</div></div>' +
+          '<span class="move-arrows">' +
+            '<span class="up-arrow" onclick="moveTask(event,this,-1)" title="Move to previous day">↑</span>' +
+            '<span class="down-arrow" onclick="moveTask(event,this,1)" title="Move to next day">↓</span>' +
+          '</span>';
+        form.parentNode.insertBefore(row, form);
+      });
     } catch(e) {}
   }
 
@@ -1092,6 +1518,8 @@
     });
   })();
 
+  initColourPickers();
+  restoreUserTasks();
   updateClock();
   setInterval(updateClock, 1000);
 </script>
