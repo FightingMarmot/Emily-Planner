@@ -1656,7 +1656,7 @@
       btn.setAttribute('onclick', 'removeTask(event, this)');
       btn.title = 'Remove task';
       btn.textContent = '\u00d7';
-      span.insertBefore(btn, span.firstChild);
+      span.appendChild(btn);
     });
   }
 
