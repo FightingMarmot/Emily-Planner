@@ -1127,7 +1127,7 @@
   const db = firebase.firestore();
 
   // The localStorage keys this planner syncs to the cloud.
-  const SYNC_KEYS = ['emi-planner-moves', 'emi-planner-ticks', 'emi-planner-user-tasks', 'emi-planner-deleted'];
+  const SYNC_KEYS = ['emi-planner-moves', 'emi-planner-ticks', 'emi-planner-user-tasks', 'emi-planner-deleted', 'emi-planner-edits', 'emi-planner-sections'];
   // Each planner (work / life) gets its own document, scoped under the
   // signed-in user's own private collection.
   const SYNC_DOC_ID = 'work';
@@ -1234,6 +1234,86 @@
     'Tuesday 23 June',
     'Wednesday 24 June'
   ];
+
+  let SECTION_DATES = {};
+
+  // ---- Dynamic day sections (for future dates not yet in the planner) ----
+  function labelFromISO(iso){
+    var d = new Date(iso + 'T00:00:00');
+    if (isNaN(d.getTime())) return '';
+    return DAYS[d.getDay()] + ' ' + d.getDate() + ' ' + MONTHS[d.getMonth()];
+  }
+  function slugify(s){
+    return String(s).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+  }
+  function sectionExistsByLabel(label){
+    var found = false;
+    document.querySelectorAll('.section-label').forEach(function(l){
+      var c = l.cloneNode(true); var b = c.querySelector('.today-badge'); if (b) b.remove();
+      if (c.textContent.trim() === label) found = true;
+    });
+    return found;
+  }
+  function getCustomSections(){
+    try { return JSON.parse(localStorage.getItem('emi-planner-sections') || '[]'); } catch (e) { return []; }
+  }
+  function saveCustomSections(arr){
+    localStorage.setItem('emi-planner-sections', JSON.stringify(arr));
+    pushToCloud();
+  }
+  function createSection(label, iso){
+    if (sectionExistsByLabel(label)) return label;
+    var planner = document.querySelector('.planner');
+    if (!planner) return label;
+    var sid = slugify(label);
+    if (document.getElementById('form-' + sid)) sid = sid + '-' + Date.now();
+
+    var header = document.createElement('div');
+    header.className = 'section-header';
+    header.setAttribute('data-custom-date', iso);
+    header.innerHTML =
+      '<div class="section-label">' + escapeHtml(label) + '</div>' +
+      '<button class="add-task-btn" onclick="toggleAddForm(\'' + sid + '\')" title="Add task">+</button>';
+
+    var form = document.createElement('div');
+    form.className = 'add-task-form';
+    form.id = 'form-' + sid;
+    form.innerHTML =
+      '<input type="text" id="text-' + sid + '" placeholder="Task description\u2026" />' +
+      '<div class="add-task-form-row">' +
+        '<input type="time" id="time-' + sid + '" style="width:120px;flex-shrink:0;" />' +
+        '<div class="colour-picker" id="colours-' + sid + '"></div>' +
+      '</div>' +
+      '<div class="add-task-actions">' +
+        '<button class="add-task-cancel" onclick="toggleAddForm(\'' + sid + '\')">Cancel</button>' +
+        '<button class="add-task-save" onclick="saveTask(\'' + sid + '\')">Add</button>' +
+      '</div>';
+
+    // Insert in date order among other custom sections, otherwise just before the footer
+    var insertBefore = planner.querySelector('.footer');
+    var customHeaders = planner.querySelectorAll('.section-header[data-custom-date]');
+    for (var i = 0; i < customHeaders.length; i++) {
+      if (customHeaders[i].getAttribute('data-custom-date') > iso) { insertBefore = customHeaders[i]; break; }
+    }
+    planner.insertBefore(header, insertBefore);
+    planner.insertBefore(form, insertBefore);
+
+    SECTION_DATES[label] = new Date(iso);
+    if (SECTION_ORDER.indexOf(label) === -1) SECTION_ORDER.push(label);
+    initColourPickers();
+
+    var store = getCustomSections();
+    if (!store.some(function(s){ return s.label === label; })) {
+      store.push({ label: label, date: iso });
+      saveCustomSections(store);
+    }
+    return label;
+  }
+  function rebuildCustomSections(){
+    getCustomSections().forEach(function(s){
+      if (!sectionExistsByLabel(s.label)) createSection(s.label, s.date);
+    });
+  }
 
   async function moveTask(e, arrow, dir) {
     e.stopPropagation();
@@ -1750,7 +1830,13 @@
       const resp = await fetch(PARSER_ENDPOINT, {
         method: 'POST',
         headers: headers,
-        body: JSON.stringify({ text: text, sections: SECTION_ORDER, colours: colourLabels, today: todayStr })
+        body: JSON.stringify({
+          text: text,
+          sections: buildSectionList(),
+          colours: colourLabels,
+          today: todayStr,
+          tasks: buildTaskList()
+        })
       });
       const dataText = await resp.text();
       if (!resp.ok) {
@@ -1765,8 +1851,12 @@
       return;
     }
 
-    showQuickPreview(parsed);
-    qaStatus('Check the details below, then add it.', false);
+    if (parsed && parsed.action === 'amend') {
+      showAmendPreview(parsed);
+    } else {
+      showQuickPreview(parsed);
+      qaStatus('Check the details below, then add it.', false);
+    }
     btn.disabled = false;
   }
 
@@ -1793,9 +1883,25 @@
     sections.forEach(function(s){
       if (wanted && (s.indexOf(wanted) !== -1 || wanted.indexOf(s) !== -1)) sel = s;
     });
-    var dayOpts = sections.map(function(s){
-      return '<option' + (s === sel ? ' selected' : '') + '>' + escapeHtml(s) + '</option>';
+
+    // If the parser resolved a date with no matching section, offer it as a new day.
+    var newDay = null;
+    if (parsed.dateISO) {
+      var derived = labelFromISO(parsed.dateISO);
+      if (derived) {
+        if (sectionExistsByLabel(derived)) { sel = derived; }
+        else if (!wanted || !sectionExistsByLabel(sel)) { newDay = { label: derived, iso: parsed.dateISO }; }
+      }
+    }
+
+    var dayOpts = '';
+    if (newDay) {
+      dayOpts += '<option value="' + escapeHtml(newDay.label) + '" data-iso="' + escapeHtml(newDay.iso) + '" selected>' + escapeHtml(newDay.label) + ' \u2014 new day</option>';
+    }
+    dayOpts += sections.map(function(s){
+      return '<option' + (!newDay && s === sel ? ' selected' : '') + '>' + escapeHtml(s) + '</option>';
     }).join('');
+
     var colOpts = WORK_COLOURS.map(function(c){
       return '<option value="' + c.label + '"' +
         (c.label.toLowerCase() === String(parsed.colour||'').toLowerCase() ? ' selected' : '') +
@@ -1826,12 +1932,18 @@
   }
 
   function confirmQuickAdd(){
-    var section = document.getElementById('qa-day').value;
+    var daySelect = document.getElementById('qa-day');
+    var section = daySelect.value;
+    var dayOpt = daySelect.options[daySelect.selectedIndex];
+    var newIso = dayOpt ? dayOpt.getAttribute('data-iso') : null;
     var desc = document.getElementById('qa-text').value.trim();
     var time = document.getElementById('qa-time').value.trim();
     var sub = document.getElementById('qa-sub').value.trim();
     var colourLabel = document.getElementById('qa-colour').value;
     if (!desc || !section) return;
+
+    // If this is a not-yet-existing future day, create its section first.
+    if (newIso) section = createSection(section, newIso);
 
     var dotCls = 'dot-prep';
     var cMatch = WORK_COLOURS.find(function(c){ return c.label === colourLabel; });
@@ -1877,6 +1989,191 @@
     qaStatus('Added to ' + section + '.', false);
   }
 
+  // ---- Shared builders for the parser payload ----
+  function buildSectionList(){
+    return cleanSectionLabels().map(function(label){
+      var d = SECTION_DATES[label];
+      var iso = '';
+      if (d) { var dd = new Date(d); iso = dd.toISOString().slice(0,10); }
+      return { label: label, date: iso };
+    });
+  }
+  function buildTaskList(){
+    var out = [];
+    document.querySelectorAll('.task-row').forEach(function(row){
+      var t = row.querySelector('.task-text');
+      if (!t) return;
+      // which section is this row under?
+      var el = row.previousElementSibling, sec = '';
+      while (el) {
+        if (el.classList && el.classList.contains('section-header')) {
+          var c = el.querySelector('.section-label').cloneNode(true);
+          var b = c.querySelector('.today-badge'); if (b) b.remove();
+          sec = c.textContent.trim(); break;
+        }
+        el = el.previousElementSibling;
+      }
+      out.push({ id: row.dataset.id, text: t.textContent.trim(), section: sec });
+    });
+    return out.slice(0, 80);
+  }
+
+  // ---- Amend an existing task ----
+  function timeClassForDot(dotCls){
+    if (dotCls === 'dot-urgent') return 'urgent';
+    if (dotCls === 'dot-fixed') return 'blue';
+    if (dotCls === 'dot-wym') return 'wym';
+    if (dotCls === 'dot-we') return 'purple';
+    return '';
+  }
+
+  function showAmendPreview(parsed){
+    var row = parsed.id ? document.querySelector('[data-id="' + parsed.id + '"]') : null;
+    if (!row) {
+      qaStatus('Couldn\u2019t find that task to change \u2014 try naming it more exactly.', true);
+      return;
+    }
+    var changes = parsed.changes || {};
+    var curText = row.querySelector('.task-text') ? row.querySelector('.task-text').textContent.trim() : '';
+    var curTime = row.querySelector('.task-time') ? row.querySelector('.task-time').textContent.trim() : '';
+    var curDot = 'dot-prep';
+    if (row.querySelector('.dot')) {
+      var m = row.querySelector('.dot').className.match(/dot-[a-z]+/);
+      if (m) curDot = m[0];
+    }
+    var curColourLabel = '';
+    WORK_COLOURS.forEach(function(c){ if (c.cls === curDot) curColourLabel = c.label; });
+    // current section
+    var el = row.previousElementSibling, curSec = '';
+    while (el) {
+      if (el.classList && el.classList.contains('section-header')) {
+        var cc = el.querySelector('.section-label').cloneNode(true);
+        var bb = cc.querySelector('.today-badge'); if (bb) bb.remove();
+        curSec = cc.textContent.trim(); break;
+      }
+      el = el.previousElementSibling;
+    }
+
+    var newText = changes.text != null ? changes.text : curText;
+    var newTime = changes.time != null ? changes.time : curTime;
+    var newColour = changes.colour != null ? changes.colour : curColourLabel;
+    var sections = cleanSectionLabels();
+    var newSec = curSec;
+    if (changes.section) {
+      sections.forEach(function(s){ if (s.indexOf(changes.section) !== -1 || changes.section.indexOf(s) !== -1) newSec = s; });
+    }
+
+    var dayOpts = sections.map(function(s){ return '<option' + (s === newSec ? ' selected' : '') + '>' + escapeHtml(s) + '</option>'; }).join('');
+    var colOpts = WORK_COLOURS.map(function(c){ return '<option value="' + c.label + '"' + (c.label === newColour ? ' selected' : '') + '>' + escapeHtml(c.label) + '</option>'; }).join('');
+    var inS = "font-family:'DM Mono',monospace;font-size:11px;border:1px solid #ddd8d0;border-radius:6px;padding:7px 10px;background:#fff;color:#3a3530;outline:none;";
+    var btnBase = "font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.1em;border-radius:20px;padding:5px 14px;cursor:pointer;";
+    document.getElementById('quick-add-preview').innerHTML =
+      '<div style="background:#f0ece6;border:1px solid #ddd8d0;border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:8px;margin-bottom:8px;" data-amend-id="' + escapeHtml(parsed.id) + '">' +
+        '<div style="font-size:9px;letter-spacing:.14em;color:#b0a898;text-transform:uppercase;">Change this event</div>' +
+        '<div style="font-size:10px;color:#8c7b6b;">Editing: ' + escapeHtml(curText) + '</div>' +
+        '<input id="qa-text" style="' + inS + '" value="' + escapeHtml(newText) + '" />' +
+        '<div style="display:flex;gap:8px;flex-wrap:wrap;">' +
+          '<select id="qa-day" style="' + inS + 'flex:1;min-width:150px;">' + dayOpts + '</select>' +
+          '<input id="qa-time" style="' + inS + 'width:90px;" value="' + escapeHtml(newTime) + '" placeholder="time" />' +
+          '<select id="qa-colour" style="' + inS + '">' + colOpts + '</select>' +
+        '</div>' +
+        '<div style="display:flex;gap:8px;justify-content:flex-end;">' +
+          '<button onclick="cancelQuickAdd()" style="' + btnBase + 'background:none;color:#b0a898;border:1px solid #ddd8d0;">Cancel</button>' +
+          '<button onclick="confirmAmend()" style="' + btnBase + 'background:#8c7b6b;color:#f5f2ed;border:1px solid #8c7b6b;">Save change</button>' +
+        '</div>' +
+      '</div>';
+    qaStatus('Review the change below, then save it.', false);
+  }
+
+  function confirmAmend(){
+    var card = document.querySelector('[data-amend-id]');
+    if (!card) return;
+    var id = card.getAttribute('data-amend-id');
+    var row = document.querySelector('[data-id="' + id + '"]');
+    if (!row) { qaStatus('That task is no longer here.', true); return; }
+
+    var section = document.getElementById('qa-day').value;
+    var desc = document.getElementById('qa-text').value.trim();
+    var time = document.getElementById('qa-time').value.trim();
+    var colourLabel = document.getElementById('qa-colour').value;
+    var dotCls = 'dot-prep';
+    WORK_COLOURS.forEach(function(c){ if (c.label === colourLabel) dotCls = c.cls; });
+    var timeClass = timeClassForDot(dotCls);
+
+    applyTaskFields(row, { text: desc, time: time, timeClass: timeClass, dot: dotCls });
+    relocateRowToSection(row, section);
+
+    // Persist: user tasks via their own store; built-ins via the edits overlay
+    if (id.indexOf('user-task-') === 0) {
+      persistUserTasks();
+    } else {
+      var edits = getEdits();
+      edits[id] = { text: desc, time: time, timeClass: timeClass, dot: dotCls, section: section };
+      saveEdits(edits);
+    }
+
+    document.getElementById('quick-add-preview').innerHTML = '';
+    document.getElementById('quick-add-input').value = '';
+    qaStatus('Updated \u201c' + desc + '\u201d.', false);
+  }
+
+  // Apply a set of fields to an existing row's DOM
+  function applyTaskFields(row, f){
+    if (f.text != null) {
+      var t = row.querySelector('.task-text');
+      if (t) t.textContent = f.text;
+    }
+    if (f.dot != null) {
+      var dotEl = row.querySelector('.dot');
+      if (dotEl) dotEl.className = 'dot ' + f.dot;
+    }
+    if (f.time != null) {
+      var timeEl = row.querySelector('.task-time');
+      if (f.time) {
+        if (!timeEl) {
+          timeEl = document.createElement('span');
+          row.insertBefore(timeEl, row.querySelector('.task-body'));
+        }
+        timeEl.className = 'task-time ' + (f.timeClass || '');
+        timeEl.textContent = f.time;
+      } else if (timeEl) {
+        timeEl.remove();
+      }
+    }
+  }
+
+  function relocateRowToSection(row, sectionLabel){
+    var target = null;
+    document.querySelectorAll('.section-label').forEach(function(l){
+      if (target) return;
+      var c = l.cloneNode(true); var b = c.querySelector('.today-badge'); if (b) b.remove();
+      if (c.textContent.trim() === sectionLabel) target = l.closest('.section-header');
+    });
+    if (!target) return;
+    var anchor = target;
+    if (anchor.nextElementSibling && anchor.nextElementSibling.classList.contains('add-task-form')) anchor = anchor.nextElementSibling;
+    anchor.insertAdjacentElement('afterend', row);
+  }
+
+  // ---- Edits overlay store (built-in tasks) ----
+  function getEdits(){
+    try { return JSON.parse(localStorage.getItem('emi-planner-edits') || '{}'); } catch (e) { return {}; }
+  }
+  function saveEdits(obj){
+    localStorage.setItem('emi-planner-edits', JSON.stringify(obj));
+    pushToCloud();
+  }
+  function applyEdits(){
+    var edits = getEdits();
+    Object.keys(edits).forEach(function(id){
+      var row = document.querySelector('[data-id="' + id + '"]');
+      if (!row) return;
+      var e = edits[id];
+      applyTaskFields(row, { text: e.text, time: e.time, timeClass: e.timeClass, dot: e.dot });
+      if (e.section) relocateRowToSection(row, e.section);
+    });
+  }
+
   function initPlanner() {
     // Assign stable IDs based on task text content
     document.querySelectorAll('.task-row').forEach((row) => {
@@ -1887,6 +2184,9 @@
         }
       }
     });
+
+    // Recreate any future day-sections the user previously added (before placing tasks)
+    rebuildCustomSections();
 
     restoreMoves();
     const saved = getSavedTicks();
@@ -1913,6 +2213,7 @@
       'Tuesday 23 June':   new Date('2026-06-23'),
       'Wednesday 24 June': new Date('2026-06-24'),
     };
+    Object.keys(sectionDates).forEach(function(k){ SECTION_DATES[k] = sectionDates[k]; });
 
     const today = new Date();
     today.setHours(0,0,0,0);
@@ -2049,6 +2350,7 @@
     initColourPickers();
     restoreUserTasks();
     applyDeletions();
+    applyEdits();
     addRemoveButtons();
     updateClock();
   }
