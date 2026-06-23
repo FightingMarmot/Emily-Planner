@@ -346,6 +346,23 @@
       color: #8fa8b5;
     }
     .up-arrow:hover { background: #8fa8b5; color: #f5f2ed; border-color: #8fa8b5; }
+    .remove-btn {
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      user-select: none;
+      font-size: 13px;
+      line-height: 1;
+      border: 1px solid #c4a0a0;
+      color: #c4a0a0;
+    }
+    .remove-btn:hover { background: #b07050; color: #f5f2ed; border-color: #b07050; }
 
 
     @keyframes shoot {
@@ -1063,7 +1080,7 @@
   const db = firebase.firestore();
 
   // The localStorage keys this planner syncs to the cloud.
-  const SYNC_KEYS = ['emi-planner-moves', 'emi-planner-ticks', 'emi-planner-user-tasks'];
+  const SYNC_KEYS = ['emi-planner-moves', 'emi-planner-ticks', 'emi-planner-user-tasks', 'emi-planner-deleted'];
   // Each planner (work / life) gets its own document, scoped under the
   // signed-in user's own private collection.
   const SYNC_DOC_ID = 'work';
@@ -1225,6 +1242,9 @@
         // entirely so it can't spawn an orphan duplicate.
         if (!orig) return;
 
+        // If this task was explicitly removed, don't recreate it.
+        if (isDeleted(move.originalId) || isDeleted('task-moved-' + move.originalId)) return;
+
         var allSections = document.querySelectorAll('.section-header');
         var targetSection = null;
         allSections.forEach(function(s) { var lbl = s.querySelector('.section-label'); if (lbl && lbl.textContent.includes(move.targetSection)) targetSection = s; });
@@ -1376,6 +1396,7 @@
     textEl.value = '';
     timeEl.value = '';
     form.classList.remove('open');
+    addRemoveButtons();
   }
 
   // Persist all user-added tasks (those with id starting 'user-task-') to localStorage
@@ -1562,6 +1583,83 @@
     saveTicks(ticks);
   }
 
+  // ---- Task removal (synced across devices) ----
+  function getDeleted() {
+    try { return JSON.parse(localStorage.getItem('emi-planner-deleted') || '[]'); } catch { return []; }
+  }
+  function isDeleted(id) {
+    if (!id) return false;
+    return getDeleted().indexOf(id) !== -1;
+  }
+  function saveDeleted(arr) {
+    localStorage.setItem('emi-planner-deleted', JSON.stringify(arr));
+    pushToCloud();
+  }
+
+  function removeTask(e, btn) {
+    e.stopPropagation();
+    const row = btn.closest('.task-row');
+    if (!row) return;
+    if (!confirm('Remove this task? This can\u2019t be undone.')) return;
+
+    const id = row.dataset.id;
+    const movedFrom = row.dataset.movedFrom;
+    const deleted = getDeleted();
+    if (id && deleted.indexOf(id) === -1) deleted.push(id);
+    if (movedFrom && deleted.indexOf(movedFrom) === -1) deleted.push(movedFrom);
+
+    // Drop any move record that would recreate this task on reload
+    try {
+      let moves = JSON.parse(localStorage.getItem('emi-planner-moves') || '[]');
+      moves = moves.filter(function(m) {
+        const clonedId = 'task-moved-' + m.originalId;
+        return m.originalId !== id && m.originalId !== movedFrom && clonedId !== id;
+      });
+      localStorage.setItem('emi-planner-moves', JSON.stringify(moves));
+    } catch (e) {}
+
+    // If it's a user-added task, drop it from that store too
+    if (id && id.indexOf('user-task-') === 0) {
+      try {
+        let ut = JSON.parse(localStorage.getItem('emi-planner-user-tasks') || '[]');
+        ut = ut.filter(function(t) { return t.id !== id; });
+        localStorage.setItem('emi-planner-user-tasks', JSON.stringify(ut));
+      } catch (e) {}
+    }
+
+    saveDeleted(deleted);
+
+    row.style.transition = 'opacity 0.3s';
+    row.style.opacity = '0';
+    setTimeout(function() { row.remove(); }, 300);
+  }
+
+  // Remove any rows that were previously deleted (runs after all restoration)
+  function applyDeletions() {
+    const deleted = getDeleted();
+    if (!deleted.length) return;
+    document.querySelectorAll('.task-row').forEach(function(row) {
+      const id = row.dataset.id;
+      const from = row.dataset.movedFrom;
+      if ((id && deleted.indexOf(id) !== -1) || (from && deleted.indexOf(from) !== -1)) {
+        row.remove();
+      }
+    });
+  }
+
+  // Inject a × remove button into every task row's controls (idempotent)
+  function addRemoveButtons() {
+    document.querySelectorAll('.move-arrows').forEach(function(span) {
+      if (span.querySelector('.remove-btn')) return;
+      const btn = document.createElement('span');
+      btn.className = 'remove-btn';
+      btn.setAttribute('onclick', 'removeTask(event, this)');
+      btn.title = 'Remove task';
+      btn.textContent = '\u00d7';
+      span.insertBefore(btn, span.firstChild);
+    });
+  }
+
   function initPlanner() {
     // Assign stable IDs based on task text content
     document.querySelectorAll('.task-row').forEach((row) => {
@@ -1733,6 +1831,8 @@
 
     initColourPickers();
     restoreUserTasks();
+    applyDeletions();
+    addRemoveButtons();
     updateClock();
   }
 
