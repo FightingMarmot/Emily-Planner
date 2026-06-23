@@ -364,6 +364,46 @@
     }
     .remove-btn:hover { background: #b07050; color: #f5f2ed; border-color: #b07050; }
 
+    .quick-add {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+    .quick-add input {
+      flex: 1;
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      border: 1px solid #ddd8d0;
+      border-radius: 8px;
+      padding: 9px 12px;
+      background: #f5f2ed;
+      color: #3a3530;
+      outline: none;
+    }
+    .quick-add input:focus { border-color: #8c7b6b; }
+    .quick-add button {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      background: #8c7b6b;
+      color: #f5f2ed;
+      border: 1px solid #8c7b6b;
+      border-radius: 20px;
+      padding: 0 18px;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .quick-add button:hover { background: #7a6a5a; }
+    .quick-add button:disabled { opacity: 0.6; cursor: default; }
+    #quick-add-status {
+      font-size: 10px;
+      color: #a09888;
+      min-height: 14px;
+      margin-bottom: 12px;
+      line-height: 1.4;
+    }
+    #quick-add-status.error { color: #b07050; }
+
 
     @keyframes shoot {
       0%   { transform: translate(0, 0) rotate(-35deg); opacity: 1; }
@@ -503,6 +543,13 @@
     <a href="life.html" style="display:inline-block;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.1em;color:#8c7b6b;text-decoration:none;border:1px solid #ddd8d0;border-radius:20px;padding:4px 12px;">→ Life planner</a>
     <span id="sync-indicator" onclick="doSignOut()" title="Click to sign out">synced · sign out</span>
   </div>
+
+  <div class="quick-add">
+    <input type="text" id="quick-add-input" placeholder="Add an event in plain English — e.g. Zoom with Sam Tue 3pm" onkeydown="if(event.key==='Enter')parseAndAdd()" />
+    <button id="quick-add-btn" onclick="parseAndAdd()">Add</button>
+  </div>
+  <div id="quick-add-status"></div>
+  <div id="quick-add-preview"></div>
 
   <div class="section-header">
   <div class="section-label">Thursday 4 June</div>
@@ -1085,6 +1132,15 @@
   // signed-in user's own private collection.
   const SYNC_DOC_ID = 'work';
 
+  // =====================================================================
+  // NATURAL-LANGUAGE EVENT PARSER
+  // Points at your Cloudflare Worker (which holds the Anthropic key).
+  // Paste your Worker URL below. If you set a PLANNER_TOKEN secret on the
+  // Worker, put the same value in PARSER_TOKEN; otherwise leave it ''.
+  // =====================================================================
+  const PARSER_ENDPOINT = 'https://planner-parser.emifinch.workers.dev';
+  const PARSER_TOKEN = '';
+
   let currentUser = null;
 
   function getDocRef() {
@@ -1418,7 +1474,8 @@
       const text = row.querySelector('.task-text') ? row.querySelector('.task-text').innerHTML : '';
       const time = row.querySelector('.task-time') ? row.querySelector('.task-time').textContent : '';
       const timeClass = row.querySelector('.task-time') ? (row.querySelector('.task-time').className.replace('task-time','').trim()) : '';
-      tasks.push({ id: row.dataset.id, section: sectionText, dot, text, time, timeClass });
+      const sub = row.querySelector('.task-sub') ? row.querySelector('.task-sub').innerHTML : '';
+      tasks.push({ id: row.dataset.id, section: sectionText, dot, text, time, timeClass, sub });
     });
     localStorage.setItem('emi-planner-user-tasks', JSON.stringify(tasks));
     pushToCloud();
@@ -1445,7 +1502,9 @@
           '<div class="tick"></div>' +
           '<div class="dot ' + t.dot + '"></div>' +
           (t.time ? '<span class="task-time ' + t.timeClass + '">' + t.time + '</span>' : '') +
-          '<div class="task-body"><div class="task-text">' + t.text + '</div></div>' +
+          '<div class="task-body"><div class="task-text">' + t.text + '</div>' +
+            (t.sub ? '<div class="task-sub">' + t.sub + '</div>' : '') +
+          '</div>' +
           '<span class="move-arrows">' +
             '<span class="up-arrow" onclick="moveTask(event,this,-1)" title="Move to previous day">↑</span>' +
             '<span class="down-arrow" onclick="moveTask(event,this,1)" title="Move to next day">↓</span>' +
@@ -1658,6 +1717,164 @@
       btn.textContent = '\u00d7';
       span.appendChild(btn);
     });
+  }
+
+  // ---- Natural-language quick add ----
+  function qaStatus(msg, isError) {
+    const el = document.getElementById('quick-add-status');
+    if (!el) return;
+    el.textContent = msg || '';
+    el.className = isError ? 'error' : '';
+  }
+
+  async function parseAndAdd() {
+    const input = document.getElementById('quick-add-input');
+    const btn = document.getElementById('quick-add-btn');
+    const text = input.value.trim();
+    if (!text) return;
+    if (!PARSER_ENDPOINT || PARSER_ENDPOINT.indexOf('PASTE_') === 0) {
+      qaStatus('Quick-add isn\u2019t set up yet \u2014 add your Worker URL to the file.', true);
+      return;
+    }
+
+    btn.disabled = true;
+    qaStatus('Reading your event\u2026', false);
+
+    const colourLabels = WORK_COLOURS.map(function(c){ return c.label; });
+    const todayStr = new Date().toDateString();
+
+    let parsed;
+    try {
+      const headers = { 'content-type': 'application/json' };
+      if (PARSER_TOKEN) headers['x-planner-token'] = PARSER_TOKEN;
+      const resp = await fetch(PARSER_ENDPOINT, {
+        method: 'POST',
+        headers: headers,
+        body: JSON.stringify({ text: text, sections: SECTION_ORDER, colours: colourLabels, today: todayStr })
+      });
+      const dataText = await resp.text();
+      if (!resp.ok) {
+        qaStatus('Couldn\u2019t add that (error ' + resp.status + '). Try rephrasing.', true);
+        btn.disabled = false;
+        return;
+      }
+      parsed = JSON.parse(dataText);
+    } catch (e) {
+      qaStatus('Network or parsing error \u2014 please try again.', true);
+      btn.disabled = false;
+      return;
+    }
+
+    showQuickPreview(parsed);
+    qaStatus('Check the details below, then add it.', false);
+    btn.disabled = false;
+  }
+
+  function escapeHtml(s){
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+  function linkifySub(s){
+    return escapeHtml(s).replace(/(https?:\/\/[^\s]+)/g,
+      '<a href="$1" target="_blank" style="color:#5e88a8;text-decoration:none;">$1</a>');
+  }
+  function cleanSectionLabels(){
+    return Array.prototype.map.call(document.querySelectorAll('.section-label'), function(l){
+      var c = l.cloneNode(true); var b = c.querySelector('.today-badge'); if (b) b.remove();
+      return c.textContent.trim();
+    });
+  }
+
+  function showQuickPreview(parsed){
+    var sections = cleanSectionLabels();
+    var wanted = String(parsed.section || '').trim();
+    var sel = sections[0] || '';
+    sections.forEach(function(s){
+      if (wanted && (s.indexOf(wanted) !== -1 || wanted.indexOf(s) !== -1)) sel = s;
+    });
+    var dayOpts = sections.map(function(s){
+      return '<option' + (s === sel ? ' selected' : '') + '>' + escapeHtml(s) + '</option>';
+    }).join('');
+    var colOpts = WORK_COLOURS.map(function(c){
+      return '<option value="' + c.label + '"' +
+        (c.label.toLowerCase() === String(parsed.colour||'').toLowerCase() ? ' selected' : '') +
+        '>' + escapeHtml(c.label) + '</option>';
+    }).join('');
+    var inS = "font-family:'DM Mono',monospace;font-size:11px;border:1px solid #ddd8d0;border-radius:6px;padding:7px 10px;background:#fff;color:#3a3530;outline:none;";
+    var btnBase = "font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.1em;border-radius:20px;padding:5px 14px;cursor:pointer;";
+    document.getElementById('quick-add-preview').innerHTML =
+      '<div style="background:#f0ece6;border:1px solid #ddd8d0;border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:8px;margin-bottom:8px;">' +
+        '<div style="font-size:9px;letter-spacing:.14em;color:#b0a898;text-transform:uppercase;">Review event</div>' +
+        '<input id="qa-text" style="' + inS + '" value="' + escapeHtml(parsed.text || '') + '" />' +
+        '<div style="display:flex;gap:8px;flex-wrap:wrap;">' +
+          '<select id="qa-day" style="' + inS + 'flex:1;min-width:150px;">' + dayOpts + '</select>' +
+          '<input id="qa-time" style="' + inS + 'width:90px;" value="' + escapeHtml(parsed.time || '') + '" placeholder="time" />' +
+          '<select id="qa-colour" style="' + inS + '">' + colOpts + '</select>' +
+        '</div>' +
+        '<input id="qa-sub" style="' + inS + '" value="' + escapeHtml(parsed.sub || '') + '" placeholder="details / link (optional)" />' +
+        '<div style="display:flex;gap:8px;justify-content:flex-end;">' +
+          '<button onclick="cancelQuickAdd()" style="' + btnBase + 'background:none;color:#b0a898;border:1px solid #ddd8d0;">Cancel</button>' +
+          '<button onclick="confirmQuickAdd()" style="' + btnBase + 'background:#8c7b6b;color:#f5f2ed;border:1px solid #8c7b6b;">Add to planner</button>' +
+        '</div>' +
+      '</div>';
+  }
+
+  function cancelQuickAdd(){
+    document.getElementById('quick-add-preview').innerHTML = '';
+    qaStatus('', false);
+  }
+
+  function confirmQuickAdd(){
+    var section = document.getElementById('qa-day').value;
+    var desc = document.getElementById('qa-text').value.trim();
+    var time = document.getElementById('qa-time').value.trim();
+    var sub = document.getElementById('qa-sub').value.trim();
+    var colourLabel = document.getElementById('qa-colour').value;
+    if (!desc || !section) return;
+
+    var dotCls = 'dot-prep';
+    var cMatch = WORK_COLOURS.find(function(c){ return c.label === colourLabel; });
+    if (cMatch) dotCls = cMatch.cls;
+    var timeClass = '';
+    if (dotCls === 'dot-urgent') timeClass = 'urgent';
+    else if (dotCls === 'dot-fixed') timeClass = 'blue';
+    else if (dotCls === 'dot-wym') timeClass = 'wym';
+    else if (dotCls === 'dot-we') timeClass = 'purple';
+
+    var targetSection = null;
+    document.querySelectorAll('.section-label').forEach(function(l){
+      if (targetSection) return;
+      var c = l.cloneNode(true); var b = c.querySelector('.today-badge'); if (b) b.remove();
+      if (c.textContent.trim() === section) targetSection = l.closest('.section-header');
+    });
+    if (!targetSection) { qaStatus('Couldn\u2019t place that one \u2014 please add it manually.', true); return; }
+    var form = targetSection.nextElementSibling;
+    if (!form || !form.classList.contains('add-task-form')) { qaStatus('Couldn\u2019t place that one \u2014 please add it manually.', true); return; }
+
+    var row = document.createElement('div');
+    row.className = 'task-row';
+    row.setAttribute('onclick', 'tick(this)');
+    row.dataset.id = 'user-task-' + Date.now();
+    row.innerHTML =
+      '<div class="tick"></div>' +
+      '<div class="dot ' + dotCls + '"></div>' +
+      (time ? '<span class="task-time ' + timeClass + '">' + escapeHtml(time) + '</span>' : '') +
+      '<div class="task-body"><div class="task-text">' + escapeHtml(desc) + '</div>' +
+        (sub ? '<div class="task-sub">' + linkifySub(sub) + '</div>' : '') +
+      '</div>' +
+      '<span class="move-arrows">' +
+        '<span class="up-arrow" onclick="moveTask(event,this,-1)" title="Move to previous day">\u2191</span>' +
+        '<span class="down-arrow" onclick="moveTask(event,this,1)" title="Move to next day">\u2193</span>' +
+      '</span>';
+    form.parentNode.insertBefore(row, form);
+
+    persistUserTasks();
+    addRemoveButtons();
+
+    document.getElementById('quick-add-preview').innerHTML = '';
+    document.getElementById('quick-add-input').value = '';
+    qaStatus('Added to ' + section + '.', false);
   }
 
   function initPlanner() {
