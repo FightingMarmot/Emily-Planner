@@ -246,7 +246,7 @@
     .task-time {
       font-size: 10px;
       color: #b0a898;
-      min-width: 60px;
+      min-width: 70px;
       padding-top: 2px;
       letter-spacing: 0.04em;
     }
@@ -1026,6 +1026,7 @@
     SECTION_DATES[label] = new Date(iso);
     if (SECTION_ORDER.indexOf(label) === -1) SECTION_ORDER.push(label);
     initColourPickers();
+    addEndTimeInputs();
 
     var store = getCustomSections();
     if (!store.some(function(s){ return s.label === label; })) {
@@ -1206,6 +1207,52 @@
     if (form.classList.contains('open')) document.getElementById('text-' + sid).focus();
   }
 
+  // ---- Time helpers (start + optional end) ----
+  function to12h(hhmm){
+    if (!hhmm) return '';
+    var parts = String(hhmm).split(':');
+    if (parts.length < 2) return '';
+    var hr = parseInt(parts[0], 10);
+    if (isNaN(hr)) return '';
+    var ampm = hr >= 12 ? 'pm' : 'am';
+    var hr12 = hr % 12 || 12;
+    return hr12 + ':' + parts[1] + ' ' + ampm;
+  }
+  function combineTimes(start, end){
+    start = (start || '').trim();
+    end = (end || '').trim();
+    if (!start) return end;
+    if (!end) return start;
+    var s1 = start.match(/\s*(am|pm)\s*$/i), s2 = end.match(/\s*(am|pm)\s*$/i);
+    if (s1 && s2 && s1[1].toLowerCase() === s2[1].toLowerCase()) {
+      return start.replace(/\s*(am|pm)\s*$/i, '') + '\u2013' + end;
+    }
+    return start + '\u2013' + end;
+  }
+  function renderTimeSpan(timeClass, start, end){
+    var disp = combineTimes(start, end);
+    if (!disp) return '';
+    return '<span class="task-time ' + (timeClass || '') + '" data-start="' + escapeHtml(start || '') + '" data-end="' + escapeHtml(end || '') + '">' + escapeHtml(disp) + '</span>';
+  }
+  function addEndTimeInputs(){
+    document.querySelectorAll('.add-task-form').forEach(function(form){
+      var sid = form.id.replace('form-', '');
+      if (document.getElementById('endtime-' + sid)) return;
+      var startInput = document.getElementById('time-' + sid);
+      if (!startInput) return;
+      var dash = document.createElement('span');
+      dash.textContent = 'to';
+      dash.style.cssText = "font-size:10px;color:#b0a898;align-self:center;";
+      var end = document.createElement('input');
+      end.type = 'time';
+      end.id = 'endtime-' + sid;
+      end.title = 'End time (optional)';
+      end.style.cssText = 'width:110px;flex-shrink:0;';
+      startInput.insertAdjacentElement('afterend', end);
+      startInput.insertAdjacentElement('afterend', dash);
+    });
+  }
+
   function saveTask(sid) {
     const textEl = document.getElementById('text-' + sid);
     const timeEl = document.getElementById('time-' + sid);
@@ -1213,16 +1260,9 @@
     if (!text) return;
 
     const dot = selectedColour[sid] || 'dot-home';
-    const timeVal = timeEl.value;
-    let timeDisplay = '';
-    let timeClass = '';
-    if (timeVal) {
-      const [h, m] = timeVal.split(':');
-      const hr = parseInt(h);
-      const ampm = hr >= 12 ? 'pm' : 'am';
-      const hr12 = hr % 12 || 12;
-      timeDisplay = hr12 + ':' + m + ' ' + ampm;
-    }
+    const endEl = document.getElementById('endtime-' + sid);
+    const startDisp = to12h(timeEl.value);
+    const endDisp = to12h(endEl ? endEl.value : '');
 
     const row = document.createElement('div');
     row.className = 'task-row';
@@ -1230,7 +1270,7 @@
     row.innerHTML =
       '<div class="tick"></div>' +
       '<div class="dot ' + dot + '"></div>' +
-      (timeDisplay ? '<span class="task-time">' + timeDisplay + '</span>' : '') +
+      renderTimeSpan('', startDisp, endDisp) +
       '<div class="task-body"><div class="task-text">' + text + '</div></div>' +
       '<span class="move-arrows">' +
         '<span class="up-arrow" onclick="moveTask(event,this,-1)" title="Move to previous day">↑</span>' +
@@ -1246,6 +1286,7 @@
 
     textEl.value = '';
     timeEl.value = '';
+    if (endEl) endEl.value = '';
     form.classList.remove('open');
     addRemoveButtons();
   }
@@ -1264,9 +1305,11 @@
       }
       const dot = row.querySelector('.dot') ? row.querySelector('.dot').className.replace('dot ','') : 'dot-home';
       const text = row.querySelector('.task-text') ? row.querySelector('.task-text').innerHTML : '';
-      const time = row.querySelector('.task-time') ? row.querySelector('.task-time').textContent : '';
+      const span = row.querySelector('.task-time');
+      const start = span ? (span.getAttribute('data-start') || span.textContent || '') : '';
+      const end = span ? (span.getAttribute('data-end') || '') : '';
       const sub = row.querySelector('.task-sub') ? row.querySelector('.task-sub').innerHTML : '';
-      tasks.push({ id: row.dataset.id, section: sectionText, dot, text, time, sub });
+      tasks.push({ id: row.dataset.id, section: sectionText, dot, text, start, end, sub });
     });
     localStorage.setItem('emi-life-planner-user-tasks', JSON.stringify(tasks));
     pushToCloud();
@@ -1288,10 +1331,12 @@
         row.className = 'task-row';
         row.setAttribute('onclick', 'tick(this)');
         row.dataset.id = t.id;
+        var rStart = (t.start != null) ? t.start : (t.time || '');
+        var rEnd = t.end || '';
         row.innerHTML =
           '<div class="tick"></div>' +
           '<div class="dot ' + t.dot + '"></div>' +
-          (t.time ? '<span class="task-time">' + t.time + '</span>' : '') +
+          renderTimeSpan('', rStart, rEnd) +
           '<div class="task-body"><div class="task-text">' + t.text + '</div>' +
             (t.sub ? '<div class="task-sub">' + t.sub + '</div>' : '') +
           '</div>' +
@@ -1541,7 +1586,8 @@
         '<input id="qa-text" style="' + inS + '" value="' + escapeHtml(parsed.text || '') + '" />' +
         '<div style="display:flex;gap:8px;flex-wrap:wrap;">' +
           '<select id="qa-day" style="' + inS + 'flex:1;min-width:150px;">' + dayOpts + '</select>' +
-          '<input id="qa-time" style="' + inS + 'width:90px;" value="' + escapeHtml(parsed.time || '') + '" placeholder="time" />' +
+          '<input id="qa-time" style="' + inS + 'width:80px;" value="' + escapeHtml(parsed.time || '') + '" placeholder="start" />' +
+          '<input id="qa-endtime" style="' + inS + 'width:80px;" value="' + escapeHtml(parsed.endTime || '') + '" placeholder="end" />' +
           '<select id="qa-colour" style="' + inS + '">' + colOpts + '</select>' +
         '</div>' +
         '<input id="qa-sub" style="' + inS + '" value="' + escapeHtml(parsed.sub || '') + '" placeholder="details / link (optional)" />' +
@@ -1564,6 +1610,7 @@
     var newIso = dayOpt ? dayOpt.getAttribute('data-iso') : null;
     var desc = document.getElementById('qa-text').value.trim();
     var time = document.getElementById('qa-time').value.trim();
+    var endtime = document.getElementById('qa-endtime').value.trim();
     var sub = document.getElementById('qa-sub').value.trim();
     var colourLabel = document.getElementById('qa-colour').value;
     if (!desc || !section) return;
@@ -1591,7 +1638,7 @@
     row.innerHTML =
       '<div class="tick"></div>' +
       '<div class="dot ' + dotCls + '"></div>' +
-      (time ? '<span class="task-time">' + escapeHtml(time) + '</span>' : '') +
+      renderTimeSpan('', time, endtime) +
       '<div class="task-body"><div class="task-text">' + escapeHtml(desc) + '</div>' +
         (sub ? '<div class="task-sub">' + linkifySub(sub) + '</div>' : '') +
       '</div>' +
@@ -1646,7 +1693,9 @@
     }
     var changes = parsed.changes || {};
     var curText = row.querySelector('.task-text') ? row.querySelector('.task-text').textContent.trim() : '';
-    var curTime = row.querySelector('.task-time') ? row.querySelector('.task-time').textContent.trim() : '';
+    var curSpan = row.querySelector('.task-time');
+    var curTime = curSpan ? (curSpan.getAttribute('data-start') || curSpan.textContent.trim()) : '';
+    var curEnd = curSpan ? (curSpan.getAttribute('data-end') || '') : '';
     var curDot = 'dot-home';
     if (row.querySelector('.dot')) {
       var m = row.querySelector('.dot').className.match(/dot-[a-z]+/);
@@ -1666,6 +1715,7 @@
 
     var newText = changes.text != null ? changes.text : curText;
     var newTime = changes.time != null ? changes.time : curTime;
+    var newEnd = changes.endTime != null ? changes.endTime : curEnd;
     var newColour = changes.colour != null ? changes.colour : curColourLabel;
     var sections = cleanSectionLabels();
     var newSec = curSec;
@@ -1684,7 +1734,8 @@
         '<input id="qa-text" style="' + inS + '" value="' + escapeHtml(newText) + '" />' +
         '<div style="display:flex;gap:8px;flex-wrap:wrap;">' +
           '<select id="qa-day" style="' + inS + 'flex:1;min-width:150px;">' + dayOpts + '</select>' +
-          '<input id="qa-time" style="' + inS + 'width:90px;" value="' + escapeHtml(newTime) + '" placeholder="time" />' +
+          '<input id="qa-time" style="' + inS + 'width:80px;" value="' + escapeHtml(newTime) + '" placeholder="start" />' +
+          '<input id="qa-endtime" style="' + inS + 'width:80px;" value="' + escapeHtml(newEnd) + '" placeholder="end" />' +
           '<select id="qa-colour" style="' + inS + '">' + colOpts + '</select>' +
         '</div>' +
         '<div style="display:flex;gap:8px;justify-content:flex-end;">' +
@@ -1705,18 +1756,19 @@
     var section = document.getElementById('qa-day').value;
     var desc = document.getElementById('qa-text').value.trim();
     var time = document.getElementById('qa-time').value.trim();
+    var endtime = document.getElementById('qa-endtime').value.trim();
     var colourLabel = document.getElementById('qa-colour').value;
     var dotCls = 'dot-home';
     WORK_COLOURS.forEach(function(c){ if (c.label === colourLabel) dotCls = c.cls; });
 
-    applyTaskFields(row, { text: desc, time: time, timeClass: '', dot: dotCls });
+    applyTaskFields(row, { text: desc, start: time, end: endtime, timeClass: '', dot: dotCls });
     relocateRowToSection(row, section);
 
     if (id.indexOf('user-task-') === 0) {
       persistUserTasks();
     } else {
       var edits = getEdits();
-      edits[id] = { text: desc, time: time, timeClass: '', dot: dotCls, section: section };
+      edits[id] = { text: desc, start: time, end: endtime, timeClass: '', dot: dotCls, section: section };
       saveEdits(edits);
     }
 
@@ -1734,15 +1786,20 @@
       var dotEl = row.querySelector('.dot');
       if (dotEl) dotEl.className = 'dot ' + f.dot;
     }
-    if (f.time != null) {
+    if (f.start != null || f.end != null) {
+      var start = f.start || '';
+      var end = f.end || '';
       var timeEl = row.querySelector('.task-time');
-      if (f.time) {
+      var disp = combineTimes(start, end);
+      if (disp) {
         if (!timeEl) {
           timeEl = document.createElement('span');
           row.insertBefore(timeEl, row.querySelector('.task-body'));
         }
-        timeEl.className = 'task-time';
-        timeEl.textContent = f.time;
+        timeEl.className = 'task-time ' + (f.timeClass || '');
+        timeEl.setAttribute('data-start', start);
+        timeEl.setAttribute('data-end', end);
+        timeEl.textContent = disp;
       } else if (timeEl) {
         timeEl.remove();
       }
@@ -1776,7 +1833,8 @@
       var row = document.querySelector('[data-id="' + id + '"]');
       if (!row) return;
       var e = edits[id];
-      applyTaskFields(row, { text: e.text, time: e.time, timeClass: '', dot: e.dot });
+      var st = (e.start != null) ? e.start : (e.time || '');
+      applyTaskFields(row, { text: e.text, start: st, end: (e.end || ''), timeClass: '', dot: e.dot });
       if (e.section) relocateRowToSection(row, e.section);
     });
   }
@@ -1954,6 +2012,7 @@
     })();
 
     initColourPickers();
+    addEndTimeInputs();
     restoreUserTasks();
     applyDeletions();
     applyEdits();
