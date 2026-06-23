@@ -351,10 +351,100 @@
     }
     .up-arrow:hover { background: #8fa8b5; color: #f5f2ed; border-color: #8fa8b5; }
 
+    #login-overlay {
+      position: fixed;
+      inset: 0;
+      background: #e3e9ee;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+      font-family: 'DM Mono', monospace;
+    }
+    .login-box {
+      background: #eef2f6;
+      border-radius: 14px;
+      padding: 32px 28px;
+      width: 100%;
+      max-width: 320px;
+      box-shadow: 0 4px 32px rgba(0,0,0,0.08);
+    }
+    .login-box .label {
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      color: #a09888;
+      margin-bottom: 4px;
+    }
+    .login-box .name {
+      font-family: 'DM Serif Display', serif;
+      font-size: 22px;
+      color: #3a3530;
+      margin-bottom: 18px;
+    }
+    .login-box input {
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      border: 1px solid #d2dce3;
+      border-radius: 6px;
+      padding: 9px 12px;
+      background: #fff;
+      color: #3a3530;
+      outline: none;
+      width: 100%;
+      margin-bottom: 10px;
+    }
+    .login-box input:focus { border-color: #5f7f99; }
+    .login-box button {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      background: #5f7f99;
+      color: #eef2f6;
+      border: 1px solid #5f7f99;
+      border-radius: 20px;
+      padding: 9px 0;
+      width: 100%;
+      cursor: pointer;
+    }
+    .login-box button:hover { background: #4d6d87; }
+    .login-box button:disabled { opacity: 0.6; cursor: default; }
+    #login-error {
+      font-size: 10px;
+      color: #b07050;
+      margin-top: 10px;
+      min-height: 12px;
+      line-height: 1.4;
+    }
+    #login-status {
+      font-size: 10px;
+      color: #a09888;
+      margin-top: 10px;
+    }
+    #sync-indicator {
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      color: #a09888;
+      cursor: pointer;
+    }
+    #sync-indicator:hover { color: #5f7f99; }
+
   </style>
 </head>
 <body>
-<div class="planner">
+
+<div id="login-overlay">
+  <div class="login-box">
+    <div class="label">LIFE PLANNER</div>
+    <div class="name">Sign in to sync</div>
+    <input type="email" id="login-email" placeholder="Email" autocomplete="username" />
+    <input type="password" id="login-password" placeholder="Password" autocomplete="current-password" />
+    <button id="login-btn" onclick="doSignIn()">Sign in</button>
+    <div id="login-error"></div>
+    <div id="login-status"></div>
+  </div>
+</div>
+
+<div class="planner" id="planner-root" style="display:none;">
 
   <div class="top">
     <div class="title-block">
@@ -367,7 +457,10 @@
     </div>
   </div>
 
-  <a href="index.html" style="display:inline-block;margin-bottom:18px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.1em;color:#5f7f99;text-decoration:none;border:1px solid #d2dce3;border-radius:20px;padding:4px 12px;">→ Work planner</a>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
+    <a href="index.html" style="display:inline-block;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.1em;color:#5f7f99;text-decoration:none;border:1px solid #d2dce3;border-radius:20px;padding:4px 12px;">→ Work planner</a>
+    <span id="sync-indicator" onclick="doSignOut()" title="Click to sign out">synced · sign out</span>
+  </div>
 
   <div class="section-header">
   <div class="section-label">Wednesday 10 June</div>
@@ -672,7 +765,111 @@
 
 </div>
 
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
 <script>
+  // =====================================================================
+  // FIREBASE SYNC CONFIG
+  // Use the SAME config object as index.html (same Firebase project).
+  // Not a secret — access control is handled by Firestore rules +
+  // the email/password account, not by hiding this object.
+  // =====================================================================
+  const firebaseConfig = {
+    apiKey: "AIzaSyBHGsgbuECKdrrVHPCv5_oJY6SCVzC3urg",
+    authDomain: "fightingmarmotp.firebaseapp.com",
+    projectId: "fightingmarmotp",
+    storageBucket: "fightingmarmotp.firebasestorage.app",
+    messagingSenderId: "622317512598",
+    appId: "1:622317512598:web:c1ffa935965e6a4a40dfb7"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+
+  // The localStorage keys this planner syncs to the cloud.
+  const SYNC_KEYS = ['emi-life-planner-moves', 'emi-life-planner-ticks', 'emi-life-planner-user-tasks'];
+  // Each planner (work / life) gets its own document, scoped under the
+  // signed-in user's own private collection.
+  const SYNC_DOC_ID = 'life';
+
+  let currentUser = null;
+
+  function getDocRef() {
+    return db.collection('users').doc(currentUser.uid).collection('planner').doc(SYNC_DOC_ID);
+  }
+
+  async function pullFromCloud() {
+    try {
+      const snap = await getDocRef().get();
+      if (snap.exists) {
+        const data = snap.data();
+        SYNC_KEYS.forEach(k => {
+          if (typeof data[k] === 'string') localStorage.setItem(k, data[k]);
+        });
+      }
+    } catch (e) {
+      console.error('Cloud pull failed', e);
+    }
+  }
+
+  function pushToCloud() {
+    if (!currentUser) return;
+    const payload = {};
+    SYNC_KEYS.forEach(k => { payload[k] = localStorage.getItem(k) || ''; });
+    payload.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
+    getDocRef().set(payload, { merge: true }).catch(e => console.error('Cloud push failed', e));
+  }
+
+  function doSignIn() {
+    const email = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-password').value;
+    const btn = document.getElementById('login-btn');
+    const errEl = document.getElementById('login-error');
+    const statusEl = document.getElementById('login-status');
+    errEl.textContent = '';
+    if (!email || !password) { errEl.textContent = 'Enter your email and password.'; return; }
+    btn.disabled = true;
+    statusEl.textContent = 'Signing in…';
+    auth.signInWithEmailAndPassword(email, password)
+      .catch(err => {
+        errEl.textContent = err.message;
+        statusEl.textContent = '';
+        btn.disabled = false;
+      });
+  }
+
+  function doSignOut() {
+    auth.signOut();
+  }
+
+  auth.onAuthStateChanged(async (user) => {
+    const overlay = document.getElementById('login-overlay');
+    const root = document.getElementById('planner-root');
+    const statusEl = document.getElementById('login-status');
+    if (user) {
+      currentUser = user;
+      statusEl.textContent = 'Loading your planner…';
+      await pullFromCloud();
+      overlay.style.display = 'none';
+      root.style.display = '';
+      initPlanner();
+    } else {
+      currentUser = null;
+      overlay.style.display = 'flex';
+      root.style.display = 'none';
+      document.getElementById('login-btn').disabled = false;
+      statusEl.textContent = '';
+    }
+  });
+
+  // =====================================================================
+  // EXISTING PLANNER LOGIC (unchanged below, wrapped in initPlanner so it
+  // only runs once the cloud data has been pulled into localStorage)
+  // =====================================================================
+
   const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
   const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
@@ -726,6 +923,7 @@
       const moves = JSON.parse(localStorage.getItem('emi-life-planner-moves') || '[]');
       moves.push({ originalId, taskHTML, taskSub, taskTime, taskTimeText, dotClass, targetSection: targetSectionText });
       localStorage.setItem('emi-life-planner-moves', JSON.stringify(moves));
+      pushToCloud();
     } catch(e) {}
 
     // Clone keeps its inline onclick handlers, so no re-wiring needed
@@ -828,6 +1026,7 @@
   function initColourPickers() {
     document.querySelectorAll('.colour-picker').forEach(picker => {
       const sid = picker.id.replace('colours-', '');
+      picker.innerHTML = '';
       WORK_COLOURS.forEach((col, i) => {
         const sw = document.createElement('span');
         sw.className = 'colour-swatch' + (i === 0 ? ' selected' : '');
@@ -913,6 +1112,7 @@
       tasks.push({ id: row.dataset.id, section: sectionText, dot, text, time });
     });
     localStorage.setItem('emi-life-planner-user-tasks', JSON.stringify(tasks));
+    pushToCloud();
   }
 
   function restoreUserTasks() {
@@ -963,6 +1163,7 @@
 
   function saveTicks(ticks) {
     localStorage.setItem('emi-life-planner-ticks', JSON.stringify(ticks));
+    pushToCloud();
   }
 
   function tick_row(row) {
@@ -988,173 +1189,179 @@
     saveTicks(ticks);
   }
 
-  // Assign stable IDs based on task text content
-  document.querySelectorAll('.task-row').forEach((row) => {
-    if (!row.dataset.id) {
-      const txt = row.querySelector('.task-text');
-      if (txt) {
-        row.dataset.id = 'task-' + txt.textContent.trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').substring(0, 40);
+  function initPlanner() {
+    // Assign stable IDs based on task text content
+    document.querySelectorAll('.task-row').forEach((row) => {
+      if (!row.dataset.id) {
+        const txt = row.querySelector('.task-text');
+        if (txt) {
+          row.dataset.id = 'task-' + txt.textContent.trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').substring(0, 40);
+        }
       }
-    }
-  });
+    });
 
-  restoreMoves();
-  const saved = getSavedTicks();
-  document.querySelectorAll('.task-row').forEach(row => {
-    if (saved[row.dataset.id]) {
-      row.querySelector('.tick').classList.add('done');
-      row.querySelector('.task-text').classList.add('done-text');
-    }
-  });
+    restoreMoves();
+    const saved = getSavedTicks();
+    document.querySelectorAll('.task-row').forEach(row => {
+      if (saved[row.dataset.id]) {
+        row.querySelector('.tick').classList.add('done');
+        row.querySelector('.task-text').classList.add('done-text');
+      }
+    });
 
-  // Auto-grey past sections
-  const sectionDates = {
-    'Wednesday 10 June': new Date('2026-06-10'),
-    'Thursday 11 June':  new Date('2026-06-11'),
-    'Friday 12 June':    new Date('2026-06-12'),
-    'Saturday 13 June':  new Date('2026-06-13'),
-    'Sunday 14 June':    new Date('2026-06-14'),
-    'Monday 15 June':    new Date('2026-06-15'),
-    'Tuesday 16 June':   new Date('2026-06-16'),
-    'Tuesday 23 June':   new Date('2026-06-23'),
-    'Saturday 27 June':  new Date('2026-06-27'),
-    'Sunday 12 July':    new Date('2026-07-12'),
-    'Friday 31 July – Sunday 2 August': new Date('2026-07-31'),
-    'Saturday 8 August': new Date('2026-08-08'),
-  };
+    // Auto-grey past sections
+    const sectionDates = {
+      'Wednesday 10 June': new Date('2026-06-10'),
+      'Thursday 11 June':  new Date('2026-06-11'),
+      'Friday 12 June':    new Date('2026-06-12'),
+      'Saturday 13 June':  new Date('2026-06-13'),
+      'Sunday 14 June':    new Date('2026-06-14'),
+      'Monday 15 June':    new Date('2026-06-15'),
+      'Tuesday 16 June':   new Date('2026-06-16'),
+      'Tuesday 23 June':   new Date('2026-06-23'),
+      'Saturday 27 June':  new Date('2026-06-27'),
+      'Sunday 12 July':    new Date('2026-07-12'),
+      'Friday 31 July – Sunday 2 August': new Date('2026-07-31'),
+      'Saturday 8 August': new Date('2026-08-08'),
+    };
 
-  const today = new Date();
-  today.setHours(0,0,0,0);
+    const today = new Date();
+    today.setHours(0,0,0,0);
 
-  // Dynamically mark the section matching today's actual date with a "TODAY" badge.
-  // This keeps the marker correct no matter the real date, avoiding stale labels.
-  (function markToday() {
-    document.querySelectorAll('.section-label').forEach(label => {
-      // Remove any existing badge or legacy "— Today" text
-      const oldBadge = label.querySelector('.today-badge');
-      if (oldBadge) oldBadge.remove();
-      label.innerHTML = label.innerHTML.replace(/\s*—\s*Today\s*$/, '');
+    // Dynamically mark the section matching today's actual date with a "TODAY" badge.
+    // This keeps the marker correct no matter the real date, avoiding stale labels.
+    (function markToday() {
+      document.querySelectorAll('.section-label').forEach(label => {
+        // Remove any existing badge or legacy "— Today" text
+        const oldBadge = label.querySelector('.today-badge');
+        if (oldBadge) oldBadge.remove();
+        label.innerHTML = label.innerHTML.replace(/\s*—\s*Today\s*$/, '');
+        for (const [key, date] of Object.entries(sectionDates)) {
+          if (label.textContent.includes(key)) {
+            const d = new Date(date); d.setHours(0,0,0,0);
+            if (d.getTime() === today.getTime()) {
+              const badge = document.createElement('span');
+              badge.className = 'today-badge';
+              badge.textContent = 'TODAY';
+              label.appendChild(badge);
+            }
+            break;
+          }
+        }
+      });
+    })();
+
+    document.querySelectorAll('.section-header').forEach(header => {
+      const label = header.querySelector('.section-label');
+      if (!label) return;
+      const text = label.textContent;
       for (const [key, date] of Object.entries(sectionDates)) {
-        if (label.textContent.includes(key)) {
-          const d = new Date(date); d.setHours(0,0,0,0);
-          if (d.getTime() === today.getTime()) {
-            const badge = document.createElement('span');
-            badge.className = 'today-badge';
-            badge.textContent = 'TODAY';
-            label.appendChild(badge);
+        if (text.includes(key) && date < today) {
+          header.style.opacity = '0.4';
+          let el = header.nextElementSibling;
+          while (el && !el.classList.contains('section-header')) {
+            el.style.opacity = '0.4';
+            el = el.nextElementSibling;
           }
           break;
         }
       }
     });
-  })();
 
-  document.querySelectorAll('.section-header').forEach(header => {
-    const label = header.querySelector('.section-label');
-    if (!label) return;
-    const text = label.textContent;
-    for (const [key, date] of Object.entries(sectionDates)) {
-      if (text.includes(key) && date < today) {
-        header.style.opacity = '0.4';
-        let el = header.nextElementSibling;
-        while (el && !el.classList.contains('section-header')) {
-          el.style.opacity = '0.4';
-          el = el.nextElementSibling;
+    // Collapsible "Past days": tuck away anything 2+ days old (retrievable, never deleted)
+    (function collapsePastDays() {
+      const cutoff = new Date(today);
+      cutoff.setDate(cutoff.getDate() - 2); // archive days that are 2+ days old
+
+      const planner = document.querySelector('.planner');
+      if (!planner) return;
+      const existing = document.getElementById('past-days');
+      if (existing) existing.remove();
+
+      const body = document.createElement('div');
+      body.id = 'past-days-body';
+      body.style.display = 'none';
+
+      // Gather and move each old section (its label + its task rows) into the archive
+      const headers = Array.from(planner.querySelectorAll('.section-header'));
+      let movedCount = 0;
+      headers.forEach(header => {
+        const label = header.querySelector('.section-label');
+        if (!label) return;
+        let secDate = null;
+        for (const [key, date] of Object.entries(sectionDates)) {
+          if (label.textContent.includes(key)) { secDate = date; break; }
         }
-        break;
-      }
-    }
-  });
-
-  // Collapsible "Past days": tuck away anything 2+ days old (retrievable, never deleted)
-  (function collapsePastDays() {
-    const cutoff = new Date(today);
-    cutoff.setDate(cutoff.getDate() - 2); // archive days that are 2+ days old
-
-    const planner = document.querySelector('.planner');
-    if (!planner) return;
-
-    const body = document.createElement('div');
-    body.id = 'past-days-body';
-    body.style.display = 'none';
-
-    // Gather and move each old section (its label + its task rows) into the archive
-    const headers = Array.from(planner.querySelectorAll('.section-header'));
-    let movedCount = 0;
-    headers.forEach(header => {
-      const label = header.querySelector('.section-label');
-      if (!label) return;
-      let secDate = null;
-      for (const [key, date] of Object.entries(sectionDates)) {
-        if (label.textContent.includes(key)) { secDate = date; break; }
-      }
-      if (!secDate) return;
-      const d = new Date(secDate); d.setHours(0,0,0,0);
-      if (d <= cutoff) {
-        const group = [header];
-        let el = header.nextElementSibling;
-        while (el && !el.classList.contains('section-header')) {
-          const next = el.nextElementSibling;
-          group.push(el);
-          el = next;
+        if (!secDate) return;
+        const d = new Date(secDate); d.setHours(0,0,0,0);
+        if (d <= cutoff) {
+          const group = [header];
+          let el = header.nextElementSibling;
+          while (el && !el.classList.contains('section-header')) {
+            const next = el.nextElementSibling;
+            group.push(el);
+            el = next;
+          }
+          group.forEach(g => body.appendChild(g));
+          movedCount++;
         }
-        group.forEach(g => body.appendChild(g));
-        movedCount++;
+      });
+
+      if (movedCount === 0) return; // nothing old enough to archive
+
+      const wrap = document.createElement('div');
+      wrap.id = 'past-days';
+      const header = document.createElement('div');
+      header.id = 'past-days-header';
+      wrap.appendChild(header);
+      wrap.appendChild(body);
+
+      function updateHeader() {
+        const open = body.style.display !== 'none';
+        header.textContent = (open ? '▾ ' : '▸ ') + 'Past days (' + movedCount + ') — click to ' + (open ? 'hide' : 'show');
       }
-    });
-
-    if (movedCount === 0) return; // nothing old enough to archive
-
-    const wrap = document.createElement('div');
-    wrap.id = 'past-days';
-    const header = document.createElement('div');
-    header.id = 'past-days-header';
-    wrap.appendChild(header);
-    wrap.appendChild(body);
-
-    function updateHeader() {
-      const open = body.style.display !== 'none';
-      header.textContent = (open ? '▾ ' : '▸ ') + 'Past days (' + movedCount + ') — click to ' + (open ? 'hide' : 'show');
-    }
-    header.addEventListener('click', () => {
-      body.style.display = body.style.display === 'none' ? '' : 'none';
+      header.addEventListener('click', () => {
+        body.style.display = body.style.display === 'none' ? '' : 'none';
+        updateHeader();
+      });
       updateHeader();
-    });
-    updateHeader();
 
-    // Place the archive just above the first remaining (current) day
-    const firstRemaining = planner.querySelector('.section-header');
-    if (firstRemaining) {
-      planner.insertBefore(wrap, firstRemaining);
-    } else {
-      const footer = planner.querySelector('.footer');
-      planner.insertBefore(wrap, footer || null);
-    }
-  })();
-
-  // SAFETY NET: never let a task stay hidden. If any task row is hidden
-  // without a visible moved copy existing, force it back to visible.
-  // A planner must never silently lose a task.
-  (function safeguardTasks() {
-    document.querySelectorAll('.task-row').forEach(function(row) {
-      // Skip rows intentionally archived in the collapsible "Past days" section
-      if (row.closest('#past-days-body')) return;
-      var hidden = row.style.display === 'none' ||
-                   window.getComputedStyle(row).display === 'none';
-      if (hidden) {
-        var id = row.dataset.id;
-        var movedCopy = id ? document.querySelector('[data-moved-from="' + id + '"]') : null;
-        // If there's no visible moved copy, this task was hidden in error — restore it.
-        if (!movedCopy) {
-          row.style.display = '';
-          row.style.opacity = row.style.opacity === '0' ? '1' : row.style.opacity;
-        }
+      // Place the archive just above the first remaining (current) day
+      const firstRemaining = planner.querySelector('.section-header');
+      if (firstRemaining) {
+        planner.insertBefore(wrap, firstRemaining);
+      } else {
+        const footer = planner.querySelector('.footer');
+        planner.insertBefore(wrap, footer || null);
       }
-    });
-  })();
+    })();
 
-  initColourPickers();
-  restoreUserTasks();
+    // SAFETY NET: never let a task stay hidden. If any task row is hidden
+    // without a visible moved copy existing, force it back to visible.
+    // A planner must never silently lose a task.
+    (function safeguardTasks() {
+      document.querySelectorAll('.task-row').forEach(function(row) {
+        // Skip rows intentionally archived in the collapsible "Past days" section
+        if (row.closest('#past-days-body')) return;
+        var hidden = row.style.display === 'none' ||
+                     window.getComputedStyle(row).display === 'none';
+        if (hidden) {
+          var id = row.dataset.id;
+          var movedCopy = id ? document.querySelector('[data-moved-from="' + id + '"]') : null;
+          // If there's no visible moved copy, this task was hidden in error — restore it.
+          if (!movedCopy) {
+            row.style.display = '';
+            row.style.opacity = row.style.opacity === '0' ? '1' : row.style.opacity;
+          }
+        }
+      });
+    })();
+
+    initColourPickers();
+    restoreUserTasks();
+    updateClock();
+  }
+
   updateClock();
   setInterval(updateClock, 1000);
 </script>
