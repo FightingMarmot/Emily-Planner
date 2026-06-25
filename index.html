@@ -403,6 +403,128 @@
       line-height: 1.4;
     }
     #quick-add-status.error { color: #b07050; }
+    .debug-toggle {
+      font-size: 9px;
+      letter-spacing: 0.06em;
+      color: #c5bdb3;
+      cursor: pointer;
+      text-decoration: underline;
+      margin: -6px 0 10px;
+      display: inline-block;
+    }
+    .debug-toggle:hover { color: #8c7b6b; }
+    #debug-panel {
+      display: none;
+      background: #2b2722;
+      color: #cfe8c9;
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      line-height: 1.5;
+      border-radius: 8px;
+      padding: 10px 12px;
+      max-height: 220px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      margin-bottom: 10px;
+    }
+    #debug-panel.open { display: block; }
+    .debug-entry { margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid #44403a; }
+    .debug-entry:last-child { border-bottom: none; margin-bottom: 0; }
+    .debug-entry .dbg-time { color: #8a9a85; }
+    .debug-entry.dbg-error .dbg-body { color: #e3a98f; }
+    .debug-entry.dbg-request .dbg-body { color: #9fc7e8; }
+    .debug-clear {
+      font-family: 'DM Mono', monospace;
+      font-size: 9px;
+      letter-spacing: .08em;
+      background: none;
+      border: 1px solid #44403a;
+      color: #8a9a85;
+      border-radius: 12px;
+      padding: 2px 10px;
+      cursor: pointer;
+      margin-top: 4px;
+    }
+    .debug-clear:hover { color: #cfe8c9; border-color: #8a9a85; }
+
+    .chat-toggle {
+      font-size: 10px;
+      letter-spacing: 0.06em;
+      color: #8c7b6b;
+      cursor: pointer;
+      border: 1px solid #ddd8d0;
+      border-radius: 20px;
+      padding: 4px 12px;
+      display: inline-block;
+      margin-bottom: 10px;
+    }
+    .chat-toggle:hover { background: #f0ece6; }
+    #chat-panel {
+      display: none;
+      border: 1px solid #ddd8d0;
+      border-radius: 12px;
+      background: #f0ece6;
+      padding: 12px;
+      margin-bottom: 14px;
+    }
+    #chat-panel.open { display: block; }
+    #chat-thread {
+      max-height: 280px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .chat-bubble {
+      font-size: 11px;
+      line-height: 1.5;
+      padding: 8px 11px;
+      border-radius: 12px;
+      max-width: 85%;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .chat-bubble.user { align-self: flex-end; background: #8c7b6b; color: #f5f2ed; border-bottom-right-radius: 3px; }
+    .chat-bubble.bot  { align-self: flex-start; background: #fff; color: #3a3530; border: 1px solid #e3ddd4; border-bottom-left-radius: 3px; }
+    .chat-bubble.thinking { color: #b0a898; font-style: italic; }
+    .chat-empty { font-size: 10px; color: #b0a898; text-align: center; padding: 10px; }
+    .chat-input-row { display: flex; gap: 8px; }
+    .chat-input-row input {
+      flex: 1;
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      border: 1px solid #ddd8d0;
+      border-radius: 8px;
+      padding: 8px 11px;
+      background: #fff;
+      color: #3a3530;
+      outline: none;
+    }
+    .chat-input-row input:focus { border-color: #8c7b6b; }
+    .chat-input-row button {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      background: #8c7b6b;
+      color: #f5f2ed;
+      border: 1px solid #8c7b6b;
+      border-radius: 20px;
+      padding: 0 16px;
+      cursor: pointer;
+    }
+    .chat-input-row button:hover { background: #7a6a5a; }
+    .chat-input-row button:disabled { opacity: 0.6; cursor: default; }
+    .chat-clear {
+      font-size: 9px;
+      color: #b0a898;
+      cursor: pointer;
+      text-decoration: underline;
+      margin-top: 6px;
+      display: inline-block;
+    }
+    .chat-clear:hover { color: #8c7b6b; }
 
 
     @keyframes shoot {
@@ -550,6 +672,18 @@
   </div>
   <div id="quick-add-status"></div>
   <div id="quick-add-preview"></div>
+  <span class="debug-toggle" onclick="toggleDebugPanel()" id="debug-toggle-label">🐞 show debug log</span>
+  <div id="debug-panel"></div>
+
+  <span class="chat-toggle" onclick="toggleChat()" id="chat-toggle-label">💬 Ask about your planner</span>
+  <div id="chat-panel">
+    <div id="chat-thread"></div>
+    <div class="chat-input-row">
+      <input type="text" id="chat-input" placeholder="e.g. What's my busiest day this week?" onkeydown="if(event.key==='Enter')sendChat()" />
+      <button id="chat-send" onclick="sendChat()">Send</button>
+    </div>
+    <span class="chat-clear" onclick="clearChat()">clear conversation</span>
+  </div>
 
   <div class="section-header">
   <div class="section-label">Thursday 4 June</div>
@@ -1851,6 +1985,147 @@
     });
   }
 
+  // ---- Debug log (in-page console, no devtools needed) ----
+  var DEBUG_LOG = [];
+  function debugLog(kind, msg){
+    DEBUG_LOG.push({ t: new Date().toLocaleTimeString(), kind: kind, msg: String(msg) });
+    if (DEBUG_LOG.length > 50) DEBUG_LOG.shift();
+    renderDebugLog();
+  }
+  function renderDebugLog(){
+    var panel = document.getElementById('debug-panel');
+    if (!panel) return;
+    if (!DEBUG_LOG.length) {
+      panel.innerHTML = '<div class="debug-entry">No activity logged yet \u2014 try adding an event.</div>';
+      return;
+    }
+    panel.innerHTML = DEBUG_LOG.map(function(e){
+      return '<div class="debug-entry dbg-' + e.kind + '">' +
+        '<span class="dbg-time">[' + e.t + '] ' + e.kind + '</span>' +
+        '<div class="dbg-body">' + escapeHtml(e.msg) + '</div>' +
+      '</div>';
+    }).join('') + '<button class="debug-clear" onclick="clearDebugLog()">Clear</button>';
+    panel.scrollTop = panel.scrollHeight;
+  }
+  function clearDebugLog(){
+    DEBUG_LOG = [];
+    renderDebugLog();
+  }
+  function toggleDebugPanel(){
+    var panel = document.getElementById('debug-panel');
+    var label = document.getElementById('debug-toggle-label');
+    var open = panel.classList.toggle('open');
+    label.textContent = open ? '🐞 hide debug log' : '🐞 show debug log';
+    if (open) renderDebugLog();
+  }
+
+  // ---- Embedded assistant chat (cost-controlled: Haiku, capped history, short replies) ----
+  var CHAT_HISTORY = [];          // {role:'user'|'assistant', content}
+  var CHAT_SEND_LIMIT = 8;        // only the last 8 messages (4 turns) are sent — keeps cost flat
+  var CHAT_KEEP = 24;             // how many messages to retain locally for display
+
+  function loadChatHistory(){
+    try { CHAT_HISTORY = JSON.parse(localStorage.getItem('emi-planner-chat') || '[]'); }
+    catch (e) { CHAT_HISTORY = []; }
+  }
+  function saveChatHistory(){
+    try { localStorage.setItem('emi-planner-chat', JSON.stringify(CHAT_HISTORY.slice(-CHAT_KEEP))); } catch (e) {}
+  }
+  function toggleChat(){
+    var panel = document.getElementById('chat-panel');
+    var label = document.getElementById('chat-toggle-label');
+    var open = panel.classList.toggle('open');
+    label.textContent = open ? '💬 Hide planner chat' : '💬 Ask about your planner';
+    if (open) { renderChat(); document.getElementById('chat-input').focus(); }
+  }
+  function renderChat(){
+    var thread = document.getElementById('chat-thread');
+    if (!thread) return;
+    if (!CHAT_HISTORY.length) {
+      thread.innerHTML = '<div class="chat-empty">Ask me about your schedule \u2014 e.g. \u201cwhat\u2019s on Monday?\u201d or \u201cwhich day looks busiest?\u201d</div>';
+      return;
+    }
+    thread.innerHTML = CHAT_HISTORY.map(function(m){
+      var cls = m.role === 'user' ? 'user' : 'bot';
+      return '<div class="chat-bubble ' + cls + '">' + escapeHtml(m.content) + '</div>';
+    }).join('');
+    thread.scrollTop = thread.scrollHeight;
+  }
+  function clearChat(){
+    CHAT_HISTORY = [];
+    saveChatHistory();
+    renderChat();
+  }
+  // Compact, current-only planner summary (skips archived past days) to keep tokens low
+  function buildPlannerSummary(){
+    var out = [];
+    document.querySelectorAll('.task-row').forEach(function(row){
+      if (row.closest('#past-days-body')) return;
+      var txt = row.querySelector('.task-text'); if (!txt) return;
+      var span = row.querySelector('.task-time');
+      var time = span ? (span.textContent || '').trim() : '';
+      var el = row.previousElementSibling, sec = '';
+      while (el) {
+        if (el.classList && el.classList.contains('section-header')) {
+          var c = el.querySelector('.section-label').cloneNode(true);
+          var b = c.querySelector('.today-badge'); if (b) b.remove();
+          sec = c.textContent.trim(); break;
+        }
+        el = el.previousElementSibling;
+      }
+      out.push((sec ? sec + ': ' : '') + (time ? time + ' ' : '') + txt.textContent.trim());
+    });
+    return out.join('\n').slice(0, 3500);
+  }
+  async function sendChat(){
+    var input = document.getElementById('chat-input');
+    var btn = document.getElementById('chat-send');
+    var text = input.value.trim();
+    if (!text) return;
+    if (!PARSER_ENDPOINT || PARSER_ENDPOINT.indexOf('PASTE_') === 0) return;
+
+    CHAT_HISTORY.push({ role: 'user', content: text });
+    input.value = '';
+    renderChat();
+    var thread = document.getElementById('chat-thread');
+    var thinking = document.createElement('div');
+    thinking.className = 'chat-bubble bot thinking';
+    thinking.textContent = 'thinking\u2026';
+    thread.appendChild(thinking);
+    thread.scrollTop = thread.scrollHeight;
+    btn.disabled = true;
+
+    try {
+      var headers = { 'content-type': 'application/json' };
+      if (PARSER_TOKEN) headers['x-planner-token'] = PARSER_TOKEN;
+      var payload = {
+        mode: 'chat',
+        messages: CHAT_HISTORY.slice(-CHAT_SEND_LIMIT),
+        summary: buildPlannerSummary(),
+        today: new Date().toDateString()
+      };
+      debugLog('request', 'chat\n' + JSON.stringify(payload.messages).slice(0, 800));
+      var resp = await fetch(PARSER_ENDPOINT, { method: 'POST', headers: headers, body: JSON.stringify(payload) });
+      var dataText = await resp.text();
+      debugLog('response', 'status ' + resp.status + '\n' + dataText.slice(0, 800));
+      thinking.remove();
+      if (!resp.ok) {
+        CHAT_HISTORY.push({ role: 'assistant', content: 'Sorry, something went wrong (error ' + resp.status + ').' });
+      } else {
+        var data = {};
+        try { data = JSON.parse(dataText); } catch (e) {}
+        CHAT_HISTORY.push({ role: 'assistant', content: data.reply || 'Sorry, I couldn\u2019t answer that one.' });
+      }
+    } catch (e) {
+      thinking.remove();
+      debugLog('error', (e && e.message) ? e.message : String(e));
+      CHAT_HISTORY.push({ role: 'assistant', content: 'Couldn\u2019t reach the assistant just now.' });
+    }
+    saveChatHistory();
+    renderChat();
+    btn.disabled = false;
+  }
+
   // ---- Natural-language quick add ----
   function qaStatus(msg, isError) {
     const el = document.getElementById('quick-add-status');
@@ -1879,26 +2154,37 @@
     try {
       const headers = { 'content-type': 'application/json' };
       if (PARSER_TOKEN) headers['x-planner-token'] = PARSER_TOKEN;
+      const payload = {
+        text: text,
+        sections: buildSectionList(),
+        colours: colourLabels,
+        today: todayStr,
+        tasks: buildTaskList()
+      };
+      debugLog('request', PARSER_ENDPOINT + '\n' + JSON.stringify(payload, null, 1).slice(0, 1500));
       const resp = await fetch(PARSER_ENDPOINT, {
         method: 'POST',
         headers: headers,
-        body: JSON.stringify({
-          text: text,
-          sections: buildSectionList(),
-          colours: colourLabels,
-          today: todayStr,
-          tasks: buildTaskList()
-        })
+        body: JSON.stringify(payload)
       });
       const dataText = await resp.text();
+      debugLog('response', 'status ' + resp.status + '\n' + dataText.slice(0, 1500));
       if (!resp.ok) {
         qaStatus('Couldn\u2019t add that (error ' + resp.status + '). Try rephrasing.', true);
         btn.disabled = false;
         return;
       }
-      parsed = JSON.parse(dataText);
+      try {
+        parsed = JSON.parse(dataText);
+      } catch (parseErr) {
+        debugLog('error', 'Response was not valid JSON: ' + parseErr.message);
+        qaStatus('The reply wasn\u2019t valid \u2014 see debug log below.', true);
+        btn.disabled = false;
+        return;
+      }
     } catch (e) {
-      qaStatus('Network or parsing error \u2014 please try again.', true);
+      debugLog('error', (e && e.message) ? e.message : String(e));
+      qaStatus('Network or parsing error \u2014 see debug log below.', true);
       btn.disabled = false;
       return;
     }
@@ -2414,6 +2700,7 @@
     applyDeletions();
     applyEdits();
     addRemoveButtons();
+    loadChatHistory();
     updateClock();
   }
 
