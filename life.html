@@ -1713,6 +1713,7 @@
     thread.scrollTop = thread.scrollHeight;
     btn.disabled = true;
 
+    var pendingAction = null;
     try {
       var headers = { 'content-type': 'application/json' };
       if (PARSER_TOKEN) headers['x-planner-token'] = PARSER_TOKEN;
@@ -1720,12 +1721,15 @@
         mode: 'chat',
         messages: CHAT_HISTORY.slice(-CHAT_SEND_LIMIT),
         summary: buildPlannerSummary(),
+        sections: buildSectionList(),
+        colours: WORK_COLOURS.map(function(c){ return c.label; }),
+        tasks: buildTaskList(),
         today: new Date().toDateString()
       };
       debugLog('request', 'chat\n' + JSON.stringify(payload.messages).slice(0, 800));
       var resp = await fetch(PARSER_ENDPOINT, { method: 'POST', headers: headers, body: JSON.stringify(payload) });
       var dataText = await resp.text();
-      debugLog('response', 'status ' + resp.status + '\n' + dataText.slice(0, 800));
+      debugLog('response', 'status ' + resp.status + '\n' + dataText.slice(0, 1200));
       thinking.remove();
       if (!resp.ok) {
         CHAT_HISTORY.push({ role: 'assistant', content: 'Sorry, something went wrong (error ' + resp.status + ').' });
@@ -1733,6 +1737,7 @@
         var data = {};
         try { data = JSON.parse(dataText); } catch (e) {}
         CHAT_HISTORY.push({ role: 'assistant', content: data.reply || 'Sorry, I couldn\u2019t answer that one.' });
+        if (data.action && data.action.type) pendingAction = data.action;
       }
     } catch (e) {
       thinking.remove();
@@ -1742,6 +1747,79 @@
     saveChatHistory();
     renderChat();
     btn.disabled = false;
+    if (pendingAction) proposeChatAction(pendingAction);
+  }
+
+  // Turn a chat-proposed action into the usual confirm card (nothing applies until you click)
+  function proposeChatAction(action){
+    if (action.type === 'add') {
+      showQuickPreview({
+        section: action.section || '', dateISO: action.dateISO || '',
+        text: action.text || '', sub: action.sub || '',
+        time: action.time || '', endTime: action.endTime || '',
+        colour: action.colour || ''
+      });
+    } else if (action.type === 'amend') {
+      showAmendPreview({ id: action.id, changes: action.changes || {} });
+    } else if (action.type === 'delete') {
+      showDeletePreview(action.id, action.text || '');
+    } else {
+      return;
+    }
+    var prev = document.getElementById('quick-add-preview');
+    if (prev) prev.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  function showDeletePreview(id, text){
+    var row = id ? document.querySelector('[data-id="' + id + '"]') : null;
+    if (!row) { qaStatus('Couldn\u2019t find that task to remove \u2014 try naming it more exactly.', true); return; }
+    var label = text || (row.querySelector('.task-text') ? row.querySelector('.task-text').textContent.trim() : 'this task');
+    var btnBase = "font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.1em;border-radius:20px;padding:5px 14px;cursor:pointer;";
+    document.getElementById('quick-add-preview').innerHTML =
+      '<div style="background:#e6ecf0;border:1px solid #d2dce3;border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:8px;margin-bottom:8px;" data-delete-id="' + escapeHtml(id) + '">' +
+        '<div style="font-size:9px;letter-spacing:.14em;color:#b07050;text-transform:uppercase;">Remove this event?</div>' +
+        '<div style="font-size:12px;color:#3a3530;">' + escapeHtml(label) + '</div>' +
+        '<div style="display:flex;gap:8px;justify-content:flex-end;">' +
+          '<button onclick="cancelQuickAdd()" style="' + btnBase + 'background:none;color:#b0a898;border:1px solid #d2dce3;">Cancel</button>' +
+          '<button onclick="confirmDelete()" style="' + btnBase + 'background:#b07050;color:#eef2f6;border:1px solid #b07050;">Remove</button>' +
+        '</div>' +
+      '</div>';
+    qaStatus('Confirm the removal below.', false);
+  }
+
+  function confirmDelete(){
+    var card = document.querySelector('[data-delete-id]');
+    if (!card) return;
+    var id = card.getAttribute('data-delete-id');
+    deleteTaskById(id);
+    document.getElementById('quick-add-preview').innerHTML = '';
+    qaStatus('Removed.', false);
+  }
+
+  function deleteTaskById(id){
+    var row = document.querySelector('[data-id="' + id + '"]');
+    if (!row) return;
+    var movedFrom = row.dataset.movedFrom;
+    var deleted = getDeleted();
+    if (id && deleted.indexOf(id) === -1) deleted.push(id);
+    if (movedFrom && deleted.indexOf(movedFrom) === -1) deleted.push(movedFrom);
+    try {
+      var moves = JSON.parse(localStorage.getItem('emi-life-planner-moves') || '[]');
+      moves = moves.filter(function(m){
+        var clonedId = 'task-moved-' + m.originalId;
+        return m.originalId !== id && m.originalId !== movedFrom && clonedId !== id;
+      });
+      localStorage.setItem('emi-life-planner-moves', JSON.stringify(moves));
+    } catch (e) {}
+    if (id.indexOf('user-task-') === 0) {
+      try {
+        var ut = JSON.parse(localStorage.getItem('emi-life-planner-user-tasks') || '[]');
+        ut = ut.filter(function(t){ return t.id !== id; });
+        localStorage.setItem('emi-life-planner-user-tasks', JSON.stringify(ut));
+      } catch (e) {}
+    }
+    saveDeleted(deleted);
+    row.remove();
   }
 
   // ---- Natural-language quick add ----
